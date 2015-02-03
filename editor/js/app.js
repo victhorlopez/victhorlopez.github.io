@@ -25,9 +25,10 @@ vik.app = (function() {
         var container = $("#layout_layout2_panel_main div.w2ui-panel-content");
         renderer = new EZ.Renderer();
         renderer.createCanvas(container.width(), container.height());
+        renderer.context.makeCurrent();
         renderer.append(container[0]);
-        renderer.addTextureFromURL("ball", "assets/textures/NewTennisBallColor.jpg");
-        var camera = new EZ.ECamera(45, gl.canvas.width / gl.canvas.height, 1, 1000);
+        renderer.addTextureFromURL("default", "assets/textures/NewTennisBallColor.jpg");
+        var camera = new EZ.ECamera(45, renderer.context.width / renderer.context.height, 1, 1000);
         camera.position = [0, 0.5, 1.8];
         camera.target = [0, 0.5, 0];
         var scene = new EZ.EScene();
@@ -57,20 +58,28 @@ vik.app = (function() {
 
 
         // litegraph
+
         container = $("#layout_main_layout_panel_main div.w2ui-panel-content");
         var h = container.height();
         var w = container.width();
         var html = "<canvas class='graph' width='" + w + "' height='" + h + "'></canvas>";
         container.append(html);
+//        var gl_2d = GL.create({width:w,height:h, alpha:false});
+//        gl_2d.makeCurrent();
+//        container.append(gl.canvas);
+//        gl_2d.canvas.id = "maincanvas";
         graph = new LGraph();
         gcanvas = new LGraphCanvas(container.children()[0], graph);
         gcanvas.background_image = "img/grid.png";
-        //gcanvas.drawBackCanvas();
+        gcanvas.onNodeSelected = function(node)
+        {
+            vik.ui.updateLeftPanel( node );
+        }
 
 
-        var node_vec = LiteGraph.createNode("texture/UVs");
-        node_vec.pos = [200,200];
-        graph.add(node_vec);
+        var node_uvs = LiteGraph.createNode("texture/TextureCoords");
+        node_uvs.pos = [200,200];
+        graph.add(node_uvs);
 
         var node_tex = LiteGraph.createNode("texture/textureSample");
         node_tex.pos = [400,200];
@@ -84,14 +93,12 @@ vik.app = (function() {
         node_shader.pos = [1000,600];
         graph.add(node_shader);
 
-        node_vec.connect(0,node_tex,0 );
-        node_tex.connect(1,node_shader,0 );
-        node_tex.connect(0,node_prev,0 );
 
 
-        var node_vec = LiteGraph.createNode("texture/PixelNormalWS");
-        node_vec.pos = [100,500];
-        graph.add(node_vec);
+
+        var node_pixel = LiteGraph.createNode("texture/PixelNormalWS");
+        node_pixel.pos = [100,500];
+        graph.add(node_pixel);
 
         var node_cam = LiteGraph.createNode("texture/CameraToPixelWS");
         node_cam.pos = [100,600];
@@ -101,23 +108,37 @@ vik.app = (function() {
         node_refl.pos = [300,550];
         graph.add(node_refl);
 
-        var node_tex = LiteGraph.createNode("texture/TextureSampleCube");
-        node_tex.pos = [500,500];
-        graph.add(node_tex);
+        var node_cube = LiteGraph.createNode("texture/TextureSampleCube");
+        node_cube.pos = [500,500];
+        graph.add(node_cube);
 
-        node_vec.connect(0,node_refl,0 );
+
+
+        var node_lerp = LiteGraph.createNode("texture/Lerp");
+        node_lerp.pos = [800,500];
+        graph.add(node_lerp);
+
+
+        node_uvs.connect(0,node_tex,0 );
+        node_tex.connect(0,node_prev,0 );
+
+        node_pixel.connect(0,node_refl,0 );
         node_cam.connect(0,node_refl,1 );
-        node_refl.connect(0,node_tex,0 );
+        node_refl.connect(0,node_cube,0 );
+
+
+        node_tex.connect(1,node_lerp,0 );
+        node_cube.connect(1,node_lerp,1 );
+        node_lerp.connect(0,node_shader,0 );
 
         function render () {
             requestAnimationFrame(render);
             renderer.render(scene, camera);
         }
         render();
-
+        module.compile();
     }
     module.compile = function(){
-
         graph.runStep(1);
         gcanvas.draw(true,true);
         gl.shaders["current"] = graph.shader_output;
@@ -134,11 +155,11 @@ vik.app = (function() {
         var h = parent.height();
         gcanvas.resize(w, h);
 
-        parent = gl.canvas.parentNode;
+        parent = renderer.context.canvas.parentNode;
         w = $(parent).width();
         h = $(parent).height();
 
-        if ((w > 0 || h > 0) && (w != gl.canvas.width || h != gl.canvas.height)){
+        if ((w > 0 || h > 0) && (w != renderer.context.canvas.width || h != renderer.context.canvas.height)){
             renderer.resize(w,h);
         }
 
@@ -165,6 +186,7 @@ vik.app = (function() {
 
 
     }
+
 
     return module;
 })();
