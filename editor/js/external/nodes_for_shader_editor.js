@@ -867,6 +867,15 @@ LGraphTexture.prototype.processInputCode = function()
         var r_chan = color_output.clone();
         r_chan.output_var = color_output.getOutputVar()+".r";
         this.codes[2] = r_chan;
+        var g_chan = color_output.clone();
+        g_chan.output_var = color_output.getOutputVar()+".g";
+        this.codes[3] = g_chan;
+        var b_chan = color_output.clone();
+        b_chan.output_var = color_output.getOutputVar()+".b";
+        this.codes[4] = b_chan;
+        var a_chan = color_output.clone();
+        a_chan.output_var = color_output.getOutputVar()+".a";
+        this.codes[5] = a_chan;
 //        this.codes[3]
 //        this.codes[4]
 //        this.codes[5]
