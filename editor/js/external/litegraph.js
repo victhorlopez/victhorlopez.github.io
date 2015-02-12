@@ -813,7 +813,7 @@ LGraph.prototype.serialize = function()
     var data = {
 //		graph: this.graph,
         shader_textures: this.shader_textures,
-        //shader_output: this.shader_output, this creates a cycle 
+        //shader_output: this.shader_output, this creates a cycle
 
         iteration: this.iteration,
         frame: this.frame,
@@ -839,7 +839,6 @@ LGraph.prototype.loadFromURL = function (url, on_complete){
 
     var that = this;
     HttpRequest( url, null, function(data) {
-        var ext = url.substr(url.length - 5).toLowerCase();
         that.configure(JSON.parse(data));
         if(on_complete)
             on_complete(graph);
@@ -1171,6 +1170,8 @@ LGraphCanvas.prototype.setCanvas = function (canvas) {
         //prepare reader
         var reader = new FileReader();
         reader.onload = function (event) {
+            if(that.gl)
+                that.gl.makeCurrent();
             //console.log(event.target);
             var data = event.target.result;
             node.onDropFile(data, filename, file);
@@ -2145,6 +2146,8 @@ LGraphCanvas.prototype.drawBackCanvas = function () {
         ctx.start();
 
     //clear
+    if(this.onClearRect)
+        this.onClearRect();
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     //reset in case of error
@@ -4052,7 +4055,7 @@ var LiteGraph = {
     NODE_DEFAULT_BGCOLOR: "#444",
     NODE_DEFAULT_BOXCOLOR: "#AEF",
     NODE_SELECTED_COLOR: "#FFF",
-    NODE_DEFAULT_SHAPE: "round",
+    NODE_DEFAULT_SHAPE: "box", // round circle box
     MAX_NUMBER_OF_NODES: 1000, //avoid infinite loops
     DEFAULT_POSITION: [100,100],//default node position
     node_images_path: "",
@@ -4659,12 +4662,13 @@ CodePiece.prototype.getBody = function()
 
 CodePiece.prototype.setBody = function(s)
 {
-    var id = s.hashCode();
-    if(typeof(this.body_hash[id]) === 'undefined' ){
-        this.body_hash[id] = s;
-        this.body_ids.unshift(id);
+    if(s != ""){
+        var id = s.hashCode();
+        if(typeof(this.body_hash[id]) === 'undefined' ){
+            this.body_hash[id] = s;
+            this.body_ids.unshift(id);
+        }
     }
-
 };
 
 CodePiece.prototype.getHeader = function()
@@ -4778,7 +4782,7 @@ ShaderConstructor.createShader = function (color_code, normal_code, world_offset
         console.log(fragment_code);
     }
     try {
-        var shader = new GL.Shader(vertex_code,fragment_code);
+        var shader = {};
         shader.vertex_code = vertex_code;
         shader.fragment_code = fragment_code;
         return shader;
@@ -4798,106 +4802,81 @@ ShaderConstructor.createVertexCode = function (code, normal,offset) {
 
     var includes = code.vertex.includes;
     // header
-    var r = "\
-            precision highp float;\n\
-			attribute vec3 a_vertex;\n\
-			attribute vec3 a_normal;\n\
-			attribute vec2 a_coord;\n\
-			";
+    var r = "precision highp float;\n"+
+        "attribute vec3 a_vertex;\n"+
+        "attribute vec3 a_normal;\n"+
+        "attribute vec2 a_coord;\n";
     if (includes["v_coord"])
-        r += "varying vec2 v_coord;\n\
-            ";
+        r += "varying vec2 v_coord;\n";
     if (includes["v_normal"])
-        r += "varying vec3 v_normal;\n\
-            ";
+        r += "varying vec3 v_normal;\n";
     if (includes["v_pos"])
-        r += "varying vec3 v_pos;\n\
-            ";
+        r += "varying vec3 v_pos;\n";
     if (includes["u_time"])
-        r += "uniform float u_time;\n\
-            ";
+        r += "uniform float u_time;\n";
     if (includes["u_eye"])
-        r += "uniform vec3 u_eye;\n\
-            ";
-    r += "uniform mat4 u_mvp;\n\
-		    uniform mat4 u_model;\n";
+        r += "uniform vec3 u_eye;\n";
+    r += "uniform mat4 u_mvp;\n"+
+         "uniform mat4 u_model;\n";
 
     for(var k in code.vertex.getHeader())
         r += k;
 
     // body
-    r += "void main() {\n\
-            ";
+    r += "void main() {\n";
     if (includes["v_pos"])
-        r += "v_pos = (u_model * vec4(a_vertex,1.0)).xyz;\n\
-            ";
+        r += "      v_pos = (u_model * vec4(a_vertex,1.0)).xyz;\n";
     var ids = code.vertex.getBodyIds();
     var body_hash = code.vertex.getBody();
     for (var i = 0, l = ids.length; i < l; i++) {
-        r += body_hash[ids[i]];
+        r += "      "+body_hash[ids[i]];
     }
-    r += "gl_Position = u_mvp * vec4(a_vertex,1.0);\n\
-            }\n\
-			";
+    r += "      gl_Position = u_mvp * vec4(a_vertex,1.0);\n"+
+        "}\n";
+
     return r;
-
-
 }
 
 ShaderConstructor.createFragmentCode = function (code,normal,offset) {
     var includes = code.fragment.includes;
     // header
-    var r = "\
-            precision highp float;\n\
-			";
+    var r = "precision highp float;\n";
     if (includes["v_coord"])
-        r += "varying vec2 v_coord;\n\
-            ";
+        r += "varying vec2 v_coord;\n";
     if (includes["v_normal"])
-        r += "varying vec3 v_normal;\n\
-            ";
+        r += "varying vec3 v_normal;\n";
     if (includes["v_pos"])
-        r += "varying vec3 v_pos;\n\
-            ";
+        r += "varying vec3 v_pos;\n";
     if (includes["u_time"])
-        r += "uniform float u_time;\n\
-            ";
+        r += "uniform float u_time;\n";
     if (includes["u_eye"])
-        r += "uniform vec3 u_eye;\n\
-            ";
+        r += "uniform vec3 u_eye;\n";
     for(var k in code.fragment.getHeader())
         r += k;
     for(var k in normal.fragment.getHeader())
         r += k;
     // body
-    r += "void main() {\n\
-            ";
+    r += "void main() {\n";
     if (includes["v_normal"] || normal.getOutputVar())
-        r += "vec3 normal = v_normal;\n\
-            ";
+        r += "      vec3 normal = v_normal;\n";
     var ids = normal.fragment.getBodyIds();
     var body_hash = normal.fragment.getBody();
     for (var i = 0, l = ids.length; i < l; i++) {
-        r += body_hash[ids[i]];
+        r += "      "+body_hash[ids[i]];
     }
     if(normal.getOutputVar())
-        r += "normal = "+normal.getOutputVar()+".xyz;\n\
-            ";
+        r += "      normal = "+normal.getOutputVar()+".xyz;\n";
 
     ids = code.fragment.getBodyIds();
     body_hash = code.fragment.getBody();
     for (var i = 0, l = ids.length; i < l; i++) {
-        r += body_hash[ids[i]];
+        r += "      "+body_hash[ids[i]];
     }
 
-    r += "gl_FragColor = "+code.getOutputVar()+";\n";
-
-    r += "\n}\n\
-			";
+    r += "      gl_FragColor = "+code.getOutputVar()+";\n"+
+        "}";
 
     return r;
-
-
 }
 
 
@@ -4916,8 +4895,7 @@ function P1ParamFunc (type, name) {
 
 P1ParamFunc.prototype.getVertexCode = function (out_var, a, scope, out_type) {
     if(scope == CodePiece.VERTEX || scope == CodePiece.BOTH){
-        var code = (out_type || this.type)+" " +out_var+" = "+this.name+"("+a+");\n\
-                ";
+        var code = (out_type || this.type)+" " +out_var+" = "+this.name+"("+a+");\n";
         return code;
     }
     return "";
@@ -4925,8 +4903,7 @@ P1ParamFunc.prototype.getVertexCode = function (out_var, a, scope, out_type) {
 
 P1ParamFunc.prototype.getFragmentCode = function (out_var, a, scope, out_type) {
     if(scope == CodePiece.FRAGMENT || scope == CodePiece.BOTH){
-        var code = (out_type || this.type)+" " +out_var+" = "+this.name+"("+a+");\n\
-                ";
+        var code = (out_type || this.type)+" " +out_var+" = "+this.name+"("+a+");\n";
         return code;
     }
     return "";
@@ -4982,8 +4959,7 @@ function P2ParamFunc (type, name) {
 
 P2ParamFunc.prototype.getVertexCode = function (out_var, a, b, scope, out_type) {
     if(scope == CodePiece.VERTEX || scope == CodePiece.BOTH){
-        var code = (out_type || this.type)+" " +out_var+" = "+this.name+"("+a+","+b+");\n\
-                ";
+        var code = (out_type || this.type)+" " +out_var+" = "+this.name+"("+a+","+b+");\n";
         return code;
     }
     return "";
@@ -4991,8 +4967,7 @@ P2ParamFunc.prototype.getVertexCode = function (out_var, a, b, scope, out_type) 
 
 P2ParamFunc.prototype.getFragmentCode = function (out_var, a, b, scope, out_type) {
     if(scope == CodePiece.FRAGMENT || scope == CodePiece.BOTH){
-        var code = (out_type || this.type)+" " +out_var+" = "+this.name+"("+a+","+b+");\n\
-                ";
+        var code = (out_type || this.type)+" " +out_var+" = "+this.name+"("+a+","+b+");\n";
         return code;
     }
     return "";
@@ -5044,8 +5019,7 @@ function P3ParamFunc (type, name) {
 
 P3ParamFunc.prototype.getVertexCode = function (out_var, a, b, c, scope, out_type) {
     if(scope == CodePiece.VERTEX || scope == CodePiece.BOTH){
-        var code = (out_type || this.type)+" " +out_var+" = "+this.name+"("+a+","+b+","+c+");\n\
-                ";
+        var code = (out_type || this.type)+" " +out_var+" = "+this.name+"("+a+","+b+","+c+");\n";
         return code;
     }
     return "";
@@ -5053,8 +5027,7 @@ P3ParamFunc.prototype.getVertexCode = function (out_var, a, b, c, scope, out_typ
 
 P3ParamFunc.prototype.getFragmentCode = function (out_var, a, b, c, scope, out_type) {
     if(scope == CodePiece.FRAGMENT || scope == CodePiece.BOTH){
-        var code = (out_type || this.type)+" " +out_var+" = "+this.name+"("+a+","+b+","+c+");\n\
-                ";
+        var code = (out_type || this.type)+" " +out_var+" = "+this.name+"("+a+","+b+","+c+");\n";
         return code;
     }
     return "";
@@ -5103,8 +5076,7 @@ function PConstant (type, name) {
 
 PConstant.prototype.getVertexCode = function (output_var, value, scope) {
     if(scope == CodePiece.VERTEX || scope == CodePiece.BOTH){
-        var code = this.type+" " +output_var+" = "+value+";\n\
-                ";
+        var code = this.type+" " +output_var+" = "+value+";\n";
         return code;
     }
     return "";
@@ -5112,8 +5084,7 @@ PConstant.prototype.getVertexCode = function (output_var, value, scope) {
 
 PConstant.prototype.getFragmentCode = function (output_var, value, scope) {
     if(scope == CodePiece.FRAGMENT || scope == CodePiece.BOTH){
-        var code = this.type+" " +output_var+" = "+value+";\n\
-                ";
+        var code = this.type+" " +output_var+" = "+value+";\n";
         return code;
     }
     return "";
@@ -5149,8 +5120,7 @@ PCameraToPixelWS.getVertexCode = function (output, input) {
 
 PCameraToPixelWS.getFragmentCode = function (output, input) {
     var fragment = new CodePiece();
-    fragment.setBody("vec3 camera_to_pixel_ws = normalize(v_pos - u_eye); \n\
-            ");
+    fragment.setBody("vec3 camera_to_pixel_ws = normalize(v_pos - u_eye);\n");
     fragment.setIncludes(PCameraToPixelWS.includes);
     return fragment;
 }
@@ -5173,14 +5143,12 @@ PPixelNormalWS.id = "pixel_normal_ws";
 PPixelNormalWS.includes = {u_model: 1, a_normal: 1, v_normal: 1};
 
 PPixelNormalWS.getVertexCode = function (output, input) {
-        var code = "v_normal = (u_model * vec4(a_normal, 0.0)).xyz;\n\
-                ";
+    var code = "v_normal = (u_model * vec4(a_normal, 0.0)).xyz;\n";
     return code;
 }
 
 PPixelNormalWS.getFragmentCode = function (output, input) {
-        var code = "vec3 pixel_normal_ws = normal;\n\
-            ";
+    var code = "vec3 pixel_normal_ws = normal;\n";
 
     return code;
 }
@@ -5209,8 +5177,7 @@ PUVs.includes = {a_coord:1, v_coord: 1};
 PUVs.already_included = false; // TODO add multiple times same line
 
 PUVs.getVertexCode = function (output, input) {
-    return "v_coord = a_coord;\n\
-            ";
+    return "v_coord = a_coord;\n";
 }
 
 PUVs.getFragmentCode = function (output, input) {
@@ -5271,8 +5238,7 @@ PMixer.getVertexCode = function (output, tex1, tex2, alpha) {
 }
 
 PMixer.getFragmentCode = function (output, tex1, tex2, alpha) {
-    return "vec4 "+output+" = mix("+tex1+","+tex2+","+alpha+"); \n\
-            ";
+    return "vec4 "+output+" = mix("+tex1+","+tex2+","+alpha+"); \n";
 }
 
 PMixer.getCode = function (output, tex1, tex2, alpha) {
@@ -5302,8 +5268,7 @@ POperation.getVertexCode = function (output, op, input1, input2) {
 }
 
 POperation.getFragmentCode = function (output, op, input1, input2) {
-    return "vec4 "+output+" = "+input1+" "+op+" "+input2+"; \n\
-            ";
+    return "vec4 "+output+" = "+input1+" "+op+" "+input2+"; \n";
 }
 
 
@@ -5341,8 +5306,7 @@ PReflect.getVertexCode = function(output,incident, normal) {
 
 PReflect.getFragmentCode = function(output,incident, normal) {
 
-    var code = "vec3 "+output+"= reflect("+incident+","+normal+");\n\
-            ";
+    var code = "vec3 "+output+"= reflect("+incident+","+normal+");\n";
     return code;
 }
 
@@ -5383,8 +5347,7 @@ PSmooth.getVertexCode = function(output ,lower, upper, x) {
 
 PSmooth.getFragmentCode = function(output ,lower, upper, x) {
 
-    var code = "float "+output+" = smoothstep("+lower+","+upper+", "+x+");\n\
-            ";
+    var code = "float "+output+" = smoothstep("+lower+","+upper+", "+x+");\n";
     return code;
 }
 
@@ -5419,8 +5382,7 @@ PTextureSampleCube.getVertexCode = function (output, input, texture_id) {
 PTextureSampleCube.getFragmentCode = function (output, input, texture_id) {
     if(!input)
         throw("input for sample cube not defined")
-    var code = "vec4 " + output + " = textureCube(" + texture_id + ", " + input + ");\n\
-                ";
+    var code = "vec4 " + output + " = textureCube(" + texture_id + ", " + input + ");\n";
     return code;
 }
 
@@ -5432,7 +5394,7 @@ PTextureSampleCube.getCode = function (output, input, texture_id) {
 
     var fragment = new CodePiece();
     fragment.setBody(this.getFragmentCode(output, input, texture_id));
-    fragment.addHeaderLine("uniform samplerCube "+texture_id+";\n      ");
+    fragment.addHeaderLine("uniform samplerCube "+texture_id+";\n");
     fragment.setIncludes(PTextureSampleCube.includes);
 
     return new ShaderCode(vertex, fragment, output);
@@ -5455,8 +5417,7 @@ PTextureSample.getVertexCode = function (output, input, texture_id) {
 
 PTextureSample.getFragmentCode = function (output, input, texture_id) {
     input = input || "v_coord";
-    var code = "vec4 " + output + " = texture2D(" + texture_id + ", " + input + ");\n\
-                ";
+    var code = "vec4 " + output + " = texture2D(" + texture_id + ", " + input + ");\n";
     return code;
 }
 
@@ -5467,7 +5428,7 @@ PTextureSample.getCode = function (output, input, texture_id) {
 
     var fragment = new CodePiece();
     fragment.setBody(this.getFragmentCode(output, input, texture_id));
-    fragment.addHeaderLine("uniform sampler2D "+texture_id+";\n      ");
+    fragment.addHeaderLine("uniform sampler2D "+texture_id+";\n");
     fragment.setIncludes(PTextureSample.includes);
 
     return new ShaderCode(vertex, fragment, output);

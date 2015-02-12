@@ -520,7 +520,7 @@ LGraphShader.prototype.processInputCode = function() {
 
     var color_code = this.getInputCode(0) || LiteGraph.EMPTY_CODE; // 0 it's the color
     var normal_code = this.getInputCode(1) || LiteGraph.EMPTY_CODE; // 1 it's the normal
-    var world_offset_code = this.getInputCode(2) || LiteGraph.EMPTY_CODE; // 1 it's the normal
+    var world_offset_code = this.getInputCode(2) || LiteGraph.EMPTY_CODE; // 1 it's the position offset
 
     var shader = this.shader_piece.createShader(color_code,normal_code,world_offset_code);
     this.graph.shader_output = shader;
@@ -531,6 +531,11 @@ LGraphShader.prototype.processInputCode = function() {
     for(var i = 0; i < texture_nodes.length; ++i){
         this.graph.shader_textures.push(texture_nodes[i].properties.name);
     }
+    texture_nodes = this.graph.findNodesByType("texture/"+LGraphCubemap.title);// we need to find all the textures used in the graph
+    for(var i = 0; i < texture_nodes.length; ++i){
+        this.graph.shader_textures.push(texture_nodes[i].properties.name);
+    }
+
 
 }
 
@@ -585,8 +590,8 @@ function LGraphTexture()
     this.addOutput("A","number", {number:1});
     this.addInput("UVs","vec2");
     this.properties = {name:"", url:""};
-    this.size = [LGraphTexture.image_preview_size, LGraphTexture.image_preview_size];
-
+    //this.size = [LGraphTexture.image_preview_size, LGraphTexture.image_preview_size];
+    this.size = [170,165];
     this.shader_piece = PTextureSample; // hardcoded for testing
 
     // default texture
@@ -624,7 +629,7 @@ LGraphTexture.MODE_VALUES = {
 
 LGraphTexture.getTexture = function(name)
 {
-    var container = LGraphTexture.textures_container || gl.textures;
+    var container =  gl.textures ||LGraphTexture.textures_container; // changedo order, otherwise it bugs with the multiple context
 
     if(!container)
         throw("Cannot load texture, container of textures not found");
@@ -761,7 +766,7 @@ LGraphTexture.prototype.onDrawBackground = function(ctx)
 
     if( this._drop_texture && ctx.webgl )
     {
-        ctx.drawImage( this._drop_texture, 0,0,this.size[0],this.size[1]);
+        ctx.drawImage(this._drop_texture,this.size[1]* 0.05,this.size[1]* 0.2,this.size[0]* 0.75,this.size[1]* 0.75);
         //this._drop_texture.renderQuad(this.pos[0],this.pos[1],this.size[0],this.size[1]);
         return;
     }
@@ -795,7 +800,7 @@ LGraphTexture.prototype.onDrawBackground = function(ctx)
         ctx.translate(0,this.size[1]);
         ctx.scale(1,-1);
     }
-    ctx.drawImage(this._canvas,0,0,this.size[0],this.size[1]);
+    ctx.drawImage(this._canvas,this.size[1]* 0.05,this.size[1]* 0.2,this.size[0]* 0.75,this.size[1]* 0.75);
     ctx.restore();
 }
 
@@ -892,12 +897,7 @@ function LGraphCubemap()
     this.size = [LGraphTexture.image_preview_size, LGraphTexture.image_preview_size];
 
     this.shader_piece = PTextureSampleCube; // hardcoded for testing
-
-    // default cube map
-    if(typeof(gl) != "undefined" && gl.textures["cubemap"]){
-        this.properties.name = "cubemap";
-        this._drop_texture = gl.textures["cubemap"];
-    }
+    this.properties.name = "cube";
 }
 
 LGraphCubemap.title = "TextureSampleCube";
