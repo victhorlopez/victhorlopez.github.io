@@ -441,7 +441,7 @@ EZ.Renderer.prototype = {
     addTextureFromURL: function (name, url) {
         if(this.context != window.gl)
             this.context.makeCurrent();
-        gl.textures[name] = GL.Texture.fromURL( url, {minFilter: gl.NEAREST},this.context);
+        gl.textures[name] = GL.Texture.fromURL( url, {minFilter: gl.NEAREST});
     },
     addCubeMapFromURL: function (name, url) {
         if(this.context != window.gl)
