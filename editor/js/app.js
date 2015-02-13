@@ -14,6 +14,7 @@ vik.app = (function() {
     var graph_gl = null;
     var renderer = null;
     var main_node = null;
+    var live_update = true;
     module.init = function() {
         window.addEventListener("load", vik.ui.init());
         loadContent();
@@ -96,10 +97,7 @@ vik.app = (function() {
 //        graph_gl.animate();
 //        graph_gl.ondraw = module.draw.bind(gcanvas);
 
-
         gcanvas.background_image = "img/grid.png";
-        gcanvas.autocompile = true;
-
 
 
 
@@ -116,7 +114,8 @@ vik.app = (function() {
         }
         gcanvas.onUpdate = function(node)
         {
-            vik.app.compile( );
+            if(live_update)
+                vik.app.compile();
         }
 
         module.loadTextures();
@@ -130,7 +129,7 @@ vik.app = (function() {
 
     }
 
-//    module.drawete = function(){
+//    module.draw = function(){
 //        if(gl != graph_gl)
 //            graph_gl.makeCurrent();
 //        gl.clearColor(0.2,0.2,0.2,1);
@@ -184,6 +183,11 @@ vik.app = (function() {
         vik.ui.onResize();
     }
 
+    module.setLiveUpdate = function(value){
+        live_update = value;
+        if(value) module.compile();
+    }
+
     function loadListeners(){
 
         w2ui['main_layout'].on('resize', function (target, data) {
@@ -204,7 +208,13 @@ vik.app = (function() {
 
         var clean_graph = document.getElementById("clean_graph");
         clean_graph.addEventListener("click",function(){
-            graph.clear();
+            w2confirm('Are you sure you want to delete the graph?', function (btn) { if(btn == "Yes") graph.clear(); })
+
+        });
+
+        var apply_button = document.getElementById("apply");
+        apply_button.addEventListener("click",function(){
+            module.compile();
         });
 
         var code_downloader = document.getElementById("download_code");
@@ -214,6 +224,24 @@ vik.app = (function() {
             this.href = data;
             return true;
         });
+
+        var live_update_el = document.getElementById("live_update");
+        live_update_el.addEventListener("click",function(){
+            var div = this.parentNode;
+            var icon = this.getElementsByTagName('i')[0];
+            if(live_update){
+                div.className = div.className.replace(/pressed\b/,'');
+                icon.className = icon.className.replace(/spin\b/,'');
+                module.setLiveUpdate(false);
+
+            } else{
+                div.className = div.className +" pressed";
+                icon.className = icon.className +"spin";
+                module.setLiveUpdate(true);
+            }
+
+        });
+
 
         var code_loader = document.getElementById("load_graph");
         code_loader.addEventListener("click",function(){
@@ -235,7 +263,6 @@ vik.app = (function() {
                     });
                 }
             }
-
             var request = new XMLHttpRequest();
             request.open('GET',"graphs/list.txt");
             request.onreadystatechange = function() {
@@ -250,7 +277,6 @@ vik.app = (function() {
                 }
             }
             request.send();
-
         });
 
 
