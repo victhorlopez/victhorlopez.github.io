@@ -1780,7 +1780,6 @@ LGraphCanvas.prototype.processMouseWheel = function (e) {
 
     if (!this.graph) return;
     if (!this.allow_dragcanvas) return;
-    console.log(e);
     var delta = (e.wheelDelta != null ? e.wheelDelta : e.detail * -60);
 
     this.adjustMouseEvent(e);
