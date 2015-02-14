@@ -4935,8 +4935,6 @@ ShaderConstructor.createVertexCode = function (code, normal,offset) {
         r += "      v_pos = (u_model * vec4(a_vertex,1.0)).xyz;\n";
     var ids = code.vertex.getBodyIds();
     var body_hash = code.vertex.getBody();
-    console.log(ids);
-    console.log(body_hash);
     for (var i = 0, l = ids.length; i < l; i++) {
         r += "      "+body_hash[ids[i]].str;
     }
