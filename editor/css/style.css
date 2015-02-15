@@ -28,8 +28,17 @@ body .dg .title {
     user-select: none;
 }
 
+/* only for the right column panel of dat guio */
+body #layout_layout3_panel_main .dg .property-name{
+    width :100%;
+}
+
+body .dg .property-name{
+    padding-left: 12px;
+}
+
 body .dg.main {
-    //box-shadow: 0 0 8px rgba(0,0,0,0.7);
+    /*box-shadow: 0 0 8px rgba(0,0,0,0.7);*/
 }
 
 @media only screen and (max-width : 1350px) {
@@ -109,7 +118,8 @@ body .dg {
 body .dg li:not(.folder) {
     background: #3d3d3d;
     border-bottom: 0px;
-    padding: 0 0 0 12px;
+    /*padding: 0 0 0 12px;*/
+    padding: 0;
 }
 
 body .dg li.save-row .button {
@@ -131,6 +141,7 @@ body .dg .cr.function {
     background: #333;
     color: #aaa;
     border-bottom: 1px solid #333;
+    border-left: none;
 }
 
 body .dg .cr.function:hover {

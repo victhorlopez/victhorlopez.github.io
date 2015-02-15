@@ -777,7 +777,7 @@ LGraphTexture.prototype.onDrawBackground = function(ctx)
 
 
     //Different texture? then get it from the GPU
-    if(this._last_preview_tex != this._last_tex)
+    //if(this._last_preview_tex != this._last_tex)
     {
         if(ctx.webgl)
         {
@@ -871,6 +871,13 @@ LGraphTexture.prototype.processInputCode = function()
 //        this.codes[3]
 //        this.codes[4]
 //        this.codes[5]
+    } else {
+        this.codes[0] = LiteGraph.EMPTY_CODE;
+        this.codes[1] = LiteGraph.EMPTY_CODE;
+        this.codes[2] = LiteGraph.EMPTY_CODE;
+        this.codes[3] = LiteGraph.EMPTY_CODE;
+        this.codes[4] = LiteGraph.EMPTY_CODE;
+        this.codes[5] = LiteGraph.EMPTY_CODE;
     }
 
 }
@@ -962,6 +969,9 @@ LGraphCubemap.prototype.processInputCode = function()
         var color_code = this.codes[1] = this.shader_piece.getCode("color_"+this.id, input_code.getOutputVar(), texture_name);
         color_code.order = this.order;
         color_code.merge(input_code);
+    } else {
+        this.codes[0] = LiteGraph.EMPTY_CODE;
+        this.codes[1] = LiteGraph.EMPTY_CODE;
     }
 
 }
@@ -1129,6 +1139,8 @@ LGraphMixer.prototype.processInputCode = function()
         }
         output_code.merge(code_A);
         output_code.merge(code_B);
+    } else {
+        this.codes[0] = LiteGraph.EMPTY_CODE;
     }
 
 }
@@ -1206,11 +1218,15 @@ LGraphReflect.prototype.processInputCode = function()
     var code_incident = this.getInputCode(1); // inident vector
 
     // (output, incident, normal)
-    var output_code = this.codes[0] = this.shader_piece.getCode("reflect_"+this.id, code_incident.getOutputVar(), code_normal.getOutputVar(), CodePiece.FRAGMENT, "vec3"); // output var must be fragment
-    output_code.order = this.order;
+    if(code_incident && code_normal){
+        var output_code = this.codes[0] = this.shader_piece.getCode("reflect_"+this.id, code_incident.getOutputVar(), code_normal.getOutputVar(), CodePiece.FRAGMENT, "vec3"); // output var must be fragment
+        output_code.order = this.order;
 
-    output_code.merge(code_normal);
-    output_code.merge(code_incident);
+        output_code.merge(code_normal);
+        output_code.merge(code_incident);
+    } else {
+        this.codes[0] = LiteGraph.EMPTY_CODE;
+    }
 
 }
 
@@ -1250,12 +1266,17 @@ LGraphSmooth.prototype.processInputCode = function()
     var x_var = x_code ? x_code.getOutputVar() :  "0.0";
 
     var output_code = this.codes[0] = this.shader_piece.getCode( "smoothed_"+this.id, lower, upper, x_var); // output var scope unknown
-    if(x_code)
+    if(x_code){
         output_code.merge(x_code);
-    if(lower_code)
-        output_code.merge(lower_code);
-    if(upper_code)
-        output_code.merge(upper_code);
+        if(lower_code)
+            output_code.merge(lower_code);
+        if(upper_code)
+            output_code.merge(upper_code);
+    } else {
+        output_code = LiteGraph.EMPTY_CODE;
+    }
+
+
 }
 
 LGraphSmooth.prototype.onDrawBackground = function(ctx)

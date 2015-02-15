@@ -44,6 +44,8 @@ LGraph.prototype.clear = function()
     //nodes
     this._nodes = [];
     this._nodes_by_id = {};
+    this._nodes_in_order = [];
+
 
     //links
     this.last_link_id = 0;
@@ -70,7 +72,15 @@ LGraph.prototype.clear = function()
     //this.graph = {};
     this.debug = true;
 
+    // flag controllig if we are configuring a graph
+    // useful to not call change() on the set up
+    this.configuring = false;
+
+    this.shader_output = null;
+
     LiteGraph.graph_max_steps = 0;
+
+
 
     this.change();
 
@@ -213,6 +223,9 @@ LGraph.prototype.updateExecutionOrder = function()
 {
     //this._nodes_in_order = this.computeExecutionBFS();
     this._nodes_in_order = this.computeExecutionOrder();
+    if(this.onUpdateExecutionOrder){
+        this.onUpdateExecutionOrder();
+    }
 }
 
 //This is more internal, it computes the order and returns it
@@ -471,7 +484,8 @@ LGraph.prototype.add = function(node, skip_compute_order)
 
     this.setDirtyCanvas(true);
 
-    this.change();
+    if(!this.configuring)
+        this.change();
 
     return node; //to chain actions
 }
@@ -891,7 +905,7 @@ LGraph.prototype.serialize = function()
         links: LiteGraph.cloneObject( this.links ),
 
         config: this.config,
-        nodes: nodes_info
+        _nodes: nodes_info
     };
 
     return data;
@@ -927,11 +941,13 @@ LGraph.prototype.configure = function(data, keep_old)
     if(!keep_old)
         this.clear();
 
+    this.configuring = true;
     var nodes = data.nodes;
 
     //copy all stored fields
     for (var i in data)
-        this[i] = data[i];
+        if(i != "nodes")
+            this[i] = data[i];
 
     var error = false;
 
@@ -953,9 +969,10 @@ LGraph.prototype.configure = function(data, keep_old)
         this.add(node, true); //add before configure, otherwise configure cannot create links
         node.configure(n_info);
     }
-
+    this.configuring = false;
     this.updateExecutionOrder();
     this.setDirtyCanvas(true,true);
+    this.change();
     return error;
 }
 
@@ -1055,6 +1072,8 @@ LGraphCanvas.prototype.clear = function () {
     this.render_connection_arrows = true;
 
     this.connections_width = 4;
+
+    //this.is_rendering = false;
 
     if (this.onClear) this.onClear();
     //this.UIinit();
@@ -1380,8 +1399,12 @@ LGraphCanvas.prototype.startRendering = function () {
     renderFrame.call(this);
 
     function renderFrame() {
-        if (!this.pause_rendering)
+        if (!this.pause_rendering){
+//            if(this.ctx && this.ctx.webgl)
+//                this.ctx.makeCurrent();
             this.draw();
+        }
+
 
         var window = this.getCanvasWindow();
         if (this.is_rendering)
@@ -1554,7 +1577,7 @@ LGraphCanvas.prototype.processMouseDown = function (e) {
      */
 
     this.graph.change();
-    this.onUpdate(); // callback
+
 
     //this is to ensure to defocus(blur) if a text input element is on focus
     if (!ref_window.document.activeElement || (ref_window.document.activeElement.nodeName.toLowerCase() != "input" && ref_window.document.activeElement.nodeName.toLowerCase() != "textarea"))
@@ -1779,7 +1802,6 @@ LGraphCanvas.prototype.processMouseUp = function (e) {
      */
 
     this.graph.change();
-    this.onUpdate();
     e.stopPropagation();
     e.preventDefault();
     return false;
@@ -1873,9 +1895,7 @@ LGraphCanvas.prototype.processMouseWheel = function (e) {
     return false; // prevent default
 }
 
-LGraphCanvas.prototype.onUpdate = function () {
 
-}
 
 LGraphCanvas.prototype.onNodeSelected = function (n) {
 
@@ -2787,6 +2807,12 @@ LGraphCanvas.prototype.resize = function (width, height) {
     if (this.canvas.width == width && this.canvas.height == height)
         return;
 
+    if(this.ctx && this.ctx.webgl){
+        this.ctx.makeCurrent();
+        gl.canvas.width = width;
+        gl.canvas.height = height;
+        gl.viewport(0, 0, width, height);
+    }
     this.canvas.width = width;
     this.canvas.height = height;
     this.bgcanvas.width = this.canvas.width;
@@ -4883,25 +4909,21 @@ ShaderConstructor.createShader = function (color_code, normal_code, world_offset
     var vertex_code = this.createVertexCode(color_code, normal_code, world_offset_code);
     var fragment_code = this.createFragmentCode(color_code, normal_code, world_offset_code);
     if(LiteGraph.debug){
-        console.log("vertex:");
-        console.log(vertex_code);
-        console.log("fragment:");
-        console.log(fragment_code);
+        console.log("compiling code");
+//        if(LiteGraph.showcode){
+//            console.log("vertex:");
+//            console.log(vertex_code);
+//            console.log("fragment:");
+//            console.log(fragment_code);
+//        }
     }
-    try {
-        var shader = {};
-        shader.vertex_code = vertex_code;
-        shader.fragment_code = fragment_code;
-        return shader;
-    }
-    catch(err) {
-        console.log("vertex:");
-        console.log(vertex_code);
-        console.log("fragment:");
-        console.log(fragment_code);
-        console.error(err);
-    }
-    return null;
+
+    var shader = {};
+    shader.vertex_code = vertex_code;
+    shader.fragment_code = fragment_code;
+    return shader;
+
+
 
 }
 
