@@ -101,7 +101,7 @@ vik.app = (function() {
 
 
         module.loadTextures();
-        graph.loadFromURL("graphs/smoothstep.json", vik.app.compile);
+        graph.loadFromURL("graphs/smoothstep.json", vik.app.compile, [true,true]);
 
         function render () {
             requestAnimationFrame(render);
