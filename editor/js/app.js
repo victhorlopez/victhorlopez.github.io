@@ -248,6 +248,9 @@ vik.app = (function() {
             var tex = LGraphTexture.loadTextureFromFile(data, filename, file);
 
         }
+        module.compile(true,true);
+        // we put a timeout so the application can download the textures
+        //setTimeout(function(){ }, 1);
 
 
     }
