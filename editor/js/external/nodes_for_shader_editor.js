@@ -10,7 +10,6 @@ function LGraph1ParamNode()
 
     this.shader_piece = LiteGraph.CodeLib[this.getCodeName()]; // hardcoded for testing
 
-    console.log(this);
 }
 
 LGraph1ParamNode.prototype.constructor = LGraph1ParamNode;
@@ -1057,7 +1056,7 @@ function LGraphAbs()
     this.code_name = "abs";
     this.output_types = {number:1, vec3:1, vec4:1, vec2:1};
     this.intput_types = {number:1, vec3:1, vec4:1, vec2:1};
-    this.output_type = "float";
+    this.output_type = "number";
 
     LGraph1ParamNode.call( this);
     console.log(this);
@@ -1111,7 +1110,7 @@ function LGraphSin()
     this.out_extra_info = {types_list: {number:1, vec3:1, vec4:1, vec2:1},   use_t:1};
     this.intput_types = { };
     this.in_extra_info = {types_list: {number:1, vec3:1, vec4:1, vec2:1},   use_t:1};
-    this.output_type = "float";
+    this.output_type = "vec3";
     LGraph1ParamNode.call( this);
     console.log(this);
 }
@@ -1133,7 +1132,7 @@ function LGraphMixer()
     this.addOutput("Result","vec4",{vec4:1, vec3:1});
     this.addInput("A","vec3", {vec4:1, vec3:1, float:1});
     this.addInput("B","vec3", {vec4:1, vec3:1, float:1});
-    this.addInput("alpha","number", {float:1});
+    this.addInput("alpha","number", {float:1, number:1});
 
     this.properties = { alpha:0.5};
     this.options = { alpha:{min:0, max:1, step:0.01}};
