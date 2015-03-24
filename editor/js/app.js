@@ -14,6 +14,8 @@ vik.app = (function() {
     var graph_gl = null;
     var renderer = null;
     var main_node = null;
+    var node_grid = null;
+    var node_box = null;
     var live_update = true;
     var canvas2webgl = window.location.href.indexOf('?3d') > -1;
     LiteGraph.current_ctx = LiteGraph.CANVAS_2D;
@@ -23,20 +25,20 @@ vik.app = (function() {
         loadListeners();
     }
 
-    module.loadTexture = function(name,url, sync_load) {
+    module.loadTexture = function(name,url, sync_load, params) {
 
         sync_load.data.callbacksToComplete += 2;
-        graph_gl.textures[name] = GL.Texture.fromURL( url, {minFilter: gl.NEAREST}, sync_load.onComplete, graph_gl);
+        graph_gl.textures[name] = GL.Texture.fromURL( url, params, sync_load.onComplete, graph_gl);
 
-        renderer.addTextureFromURL(name, url, sync_load.onComplete);
+        renderer.addTextureFromURL(name, url, params, sync_load.onComplete);
 
 
     }
-    module.loadCubeMap = function(name,url, sync_load) {
+    module.loadCubeMap = function(name,url, sync_load, params) {
 
         sync_load.data.callbacksToComplete += 2;
-        graph_gl.textures[name] = GL.Texture.cubemapFromURL( url, {minFilter: gl.NEAREST}, sync_load.onComplete, graph_gl);
-        renderer.addCubeMapFromURL(name, url, sync_load.onComplete);
+        graph_gl.textures[name] = GL.Texture.cubemapFromURL( url, params, sync_load.onComplete, graph_gl);
+        renderer.addCubeMapFromURL(name, url, params, sync_load.onComplete);
 
     }
 
@@ -52,21 +54,31 @@ vik.app = (function() {
             onComplete: function( ){
                 data.callbacksCompleted++;
                 if(data.callbacksCompleted == data.callbacksToComplete) {
-                    data.callback();
+                    data.callback("graphs/Lee.json");
                 }
             }
         };
-        module.loadTexture("ball", "assets/textures/texture/ball.jpg", sync_load);
-        module.loadTexture("noise", "assets/textures/texture/noise.png", sync_load);
-        module.loadTexture("NewTennisBallColor", "assets/textures/texture/NewTennisBallColor.jpg", sync_load);
-        module.loadTexture("BasketballColor", "assets/textures/texture/BasketballColor.jpg", sync_load);
-        module.loadCubeMap("cube2", "assets/textures/cubemap/cube2.jpg", sync_load);
+//        module.loadTexture("ball", "assets/textures/texture/ball.jpg", sync_load);
+//        module.loadTexture("noise", "assets/textures/texture/noise.png", sync_load);
+//        module.loadTexture("NewTennisBallColor", "assets/textures/texture/NewTennisBallColor.jpg", sync_load);
+//        module.loadTexture("BasketballColor", "assets/textures/texture/BasketballColor.jpg", sync_load);
+
+
+        module.loadTexture("small_waves_normal", "assets/textures/texture/small_waves_normal.png", sync_load, {minFilter: gl.LINEAR});
+        module.loadTexture("small_waves2_DISP", "assets/textures/texture/small_waves2_DISP.jpg", sync_load, {minFilter: gl.LINEAR_MIPMAP_LINEAR});
+        module.loadTexture("grass1", "assets/textures/texture/grass1.jpg", sync_load, {minFilter: gl.LINEAR_MIPMAP_LINEAR});
+        module.loadTexture("snow", "assets/textures/texture/snow.jpg", sync_load, {minFilter: gl.LINEAR_MIPMAP_LINEAR});
+        module.loadTexture("Lee", "assets/textures/texture/Lee.jpg", sync_load, {minFilter: gl.LINEAR_MIPMAP_LINEAR});
+        module.loadTexture("Lee_normal", "assets/textures/texture/Lee_normal.jpg", sync_load, {minFilter: gl.LINEAR_MIPMAP_LINEAR});
+        module.loadTexture("Lee_spec", "assets/textures/texture/Lee_spec.jpg", sync_load, {minFilter: gl.LINEAR_MIPMAP_LINEAR});
+        module.loadCubeMap("cube2", "assets/textures/cubemap/cube2.jpg", sync_load, {minFilter: gl.LINEAR_MIPMAP_LINEAR});
+
 
     }
 
-    module.loadGraph = function() {
+    module.loadGraph = function(graph_url) {
 
-        graph.loadFromURL("graphs/reflection.json", vik.app.compile, [true,true]);
+        graph.loadFromURL(graph_url, vik.app.compile, [true,true]);
 
 
     }
@@ -85,28 +97,28 @@ vik.app = (function() {
         camera.target = [0, 0.5, 0];
         var scene = new EZ.EScene();
         main_node = new EZ.EMesh();
-        main_node.mesh = "sphere";
+        main_node.mesh = "lee";
 //        main_node.setTexture("cubemap","cubemap");
 //        main_node.shader = "env_reflection";
         main_node.position = [0, 0.5, 0];
         scene.addChild(main_node);
 //
-//        var box = new EZ.EMesh();
-//        box.mesh = "box";
-//        box.followEntity(camera);
-//        box.setSkyBox();
-//        box.shader = "cubemap";
-//        box.setTexture("cubemap","cubemap");
-//        box.scale = [50,50,50];
-//        scene.addChild(box);
+        node_box = new EZ.EMesh();
+        node_box.mesh = "box";
+        node_box.followEntity(camera);
+        node_box.setSkyBox();
+        node_box.shader = "cubemap";
+        node_box.setTexture("cube2","cube2");
+        node_box.scale = [50,50,50];
+        scene.addChild(node_box);
 
         scene.addChild(camera);
 
-        var node = new EZ.EMesh();
-        node.mesh = "grid";
-        node.flags.primitive = gl.LINES;
-        node.scale = [50,50,50];
-        //scene.addChild(node);
+        node_grid = new EZ.EMesh();
+        node_grid.mesh = "grid";
+        node_grid.flags.primitive = gl.LINES;
+        node_grid.scale = [50,50,50];
+        scene.addChild(node_grid);
 
         // litegraph
         graph = new LGraph();
@@ -164,9 +176,10 @@ vik.app = (function() {
                 main_node.setTexture(texture_name, texture_name);
             }
             main_node.shader = "current";
-            var code_div = document.getElementById("code");
+            var code_div =  $("#code");//document.getElementById("code");
+            code_div.height(code_div.parent().height());
             if(graph.shader_output){
-                code_div.innerHTML = '<div class="dg"><ul>' +
+                code_div[0].innerHTML = '<div class="dg"><ul>' +
                     '<li class="code-title">Vertex Code</li>' +
                     '<pre><code class="glsl" id="vertex_code">'+graph.shader_output.vertex_code +' </pre></code>' +
                     '<li class="code-title">Fragment Code</li>'+
@@ -243,15 +256,18 @@ vik.app = (function() {
 
         }
         module.compile(true,true);
-        // we put a timeout so the application can download the textures
-        //setTimeout(function(){ }, 1);
 
 
     }
 
 
     module.changeGraph = function(graph_name) {
-        graph.loadFromURL("graphs/"+graph_name+".json", vik.app.compile);
+        function onComplete(data){
+            main_node.mesh = data.mesh;
+            vik.app.compile();
+        }
+
+        graph.loadFromURL("graphs/"+graph_name+".json", onComplete);
     }
 
     function loadListeners(){
@@ -280,7 +296,7 @@ vik.app = (function() {
 
         var clean_graph = document.getElementById("clean_graph");
         clean_graph.addEventListener("click",function(){
-            w2confirm('Are you sure you want to delete the graph?', function (btn) { if(btn == "Yes"){ graph.clear(); module.compile(true); } })
+            w2confirm('Are you sure you want to delete the graph?', function (btn) { if(btn == "Yes"){ graph.clear(); module.loadGraph("graphs/empty_graph.json"); } })
 
         });
 
@@ -292,6 +308,7 @@ vik.app = (function() {
         var code_downloader = document.getElementById("download_code");
         code_downloader.addEventListener("click",function(){
             var json = graph.serialize();
+            json.mesh = main_node.mesh;
             var data = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(json));
             this.href = data;
             return true;
@@ -374,17 +391,16 @@ vik.app = (function() {
         var mesh_buttons = document.getElementById("mesh-changer").childNodes;
         for (var i = 0; i < mesh_buttons.length ; i++) {
             mesh_buttons[i].childNodes[0].addEventListener("click",function(){
-                if(this.id != ""){
+                if(this.id == "grid"){
+                    node_grid.visible = !node_grid.visible;
+                } else if(this.id == "cubemap"){
+                    node_box.visible = !node_box.visible;
+                } else if(this.id != ""){
                     main_node.mesh = this.id;
                 }
             });
         }
 
-
-
-
     }
-
-
     return module;
 })();

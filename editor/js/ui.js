@@ -47,7 +47,23 @@ vik.ui = (function () {
                 var max = opts_ctrl ? (opts_ctrl.max) : undefined;
                 var step = opts_ctrl ? (opts_ctrl.step) : undefined;
 
-                var controller = details_gui.add(obj, property, min, max, step );
+                var controller = null;
+                if(node.hasOwnProperty("multichoice") && node.multichoice.hasOwnProperty(property)){
+                    controller = details_gui.add(obj, property, node.multichoice[property] );
+                }
+                else if( property == "color" ){
+                    controller = details_gui.addColor(obj, property );
+                }
+                else {
+                    controller = details_gui.add(obj, property, min, max, step );
+                }
+
+
+                if(node.hasOwnProperty("reloadonchange") && node.reloadonchange.hasOwnProperty(property)){
+                    controller.onFinishChange(function(value) {
+                        module.updateLeftPanel(node);
+                    });
+                }
                 details_gui.items.push(controller);
                 controller.onChange(function(value) {
                     vik.app.compile();
@@ -152,7 +168,9 @@ vik.ui = (function () {
         addMeshChangerButton("sphere","fa fa-globe","Sphere");
         addMeshChangerButton("box","fa fa-cube","Cube");
         addMeshChangerButton("plane","fa fa-square-o","Plane");
-        addMeshChangerButton("monkey","fa fa-user","Suzanne");
+        addMeshChangerButton("lee","fa fa-user","Lee");
+        addMeshChangerButton("grid","fa fa-th","Toggle Grid");
+        addMeshChangerButton("cubemap","fa fa-file-image-o","Toggle Skybox");
         addMeshChangerButton("","fa fa-folder-open","load");
 
     }

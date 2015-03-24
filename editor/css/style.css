@@ -39,6 +39,7 @@ body .dg .property-name{
 
 body .dg.main {
     /*box-shadow: 0 0 8px rgba(0,0,0,0.7);*/
+    overflow: auto;
 }
 
 @media only screen and (max-width : 1350px) {
@@ -99,13 +100,13 @@ body .dg.main .close-button:hover {
 
 body .dg.main::-webkit-scrollbar {
     background: #3d3d3d;
-    width: 9px;
+    width: 11px;
 }
 
 body .dg.main::-webkit-scrollbar-thumb {
     background: transparent;
     width: 5px;
-    border-left: 5px solid #3d3d3d;
+    border-left: 5px solid rgba(0,0,0,0.2);
     border-right: 6px solid rgba(0,0,0,0.2);
     border-radius: 0;
 }
@@ -113,6 +114,10 @@ body .dg.main::-webkit-scrollbar-thumb {
 body .dg {
     color: #aaa;
     text-shadow: none !important;
+}
+
+body .dg ul{
+    padding: 0px 4px 0px 0px;
 }
 
 body .dg li:not(.folder) {
@@ -157,7 +162,7 @@ body .dg .cr.function:active {
 
 body .dg .c select {
     margin-top: 2px;
-    margin-left: -5px;
+    margin-left: 3px;
     padding: 3px 5px;
 }
 
@@ -172,7 +177,7 @@ body .dg .cr.number input[type=text] {
 
 body .dg .c select,
 body .dg .c select:focus {
-    width: 88px;
+    width: 99%;
     outline: 0;
 }
 
@@ -300,6 +305,21 @@ body .dg li.code-title {
     padding-left: 22px;
     border-bottom: 1px solid #555;
     background-color: #444;
+}
+#code  {
+    overflow: auto;
+}
+#code::-webkit-scrollbar {
+    background: #3d3d3d;
+    width: 11px;
+}
+
+#code::-webkit-scrollbar-thumb {
+    background: transparent;
+    width: 5px;
+    border-left: 5px solid rgba(0,0,0,0.2);
+    border-right: 6px solid rgba(0,0,0,0.2);
+    border-radius: 0;
 }
 #code pre {
     margin-top: 0px;

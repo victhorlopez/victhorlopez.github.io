@@ -12,18 +12,25 @@ LGraph1ParamNode.prototype.constructor = LGraph1ParamNode;
 
 LGraph1ParamNode.prototype.onExecute = function()
 {
-    this.processInputCode();
+    this.processNodePath();
+}
+
+LGraph1ParamNode.prototype.processNodePath = function()
+{
+    var input = this.getInputNodePath(0);
+    input.push(this);
+    this.node_path[0] = input;
 }
 
 
-LGraph1ParamNode.prototype.processInputCode = function()
+LGraph1ParamNode.prototype.processInputCode = function(scope)
 {
 
     var code_A = this.getInputCode(0); // normal
 
     if(code_A){
         // (output, incident, normal)
-        var output_code = this.codes[0] = this.shader_piece.getCode(this.getCodeName()+"_"+this.id, code_A.getOutputVar(), this.getScope(), this.getOutputType()); // output var must be fragment
+        var output_code = this.codes[0] = this.shader_piece.getCode(this.getCodeName()+"_"+this.id, code_A.getOutputVar(), scope, this.getOutputType()); // output var must be fragment
         output_code.order = this.order;
         output_code.merge(code_A);
     }
@@ -76,7 +83,7 @@ function LGraph2ParamNode()
     this.addOutput("Result","", this.getOutputTypes(), this.getOutputExtraInfo() );
     this.addInput("A","", this.getInputTypesA(), this.getInputExtraInfoA());
     this.addInput("B","", this.getInputTypesB(), this.getInputExtraInfoB());
-    this.shader_piece = LiteGraph.CodeLib[this.getCodeName()]; // hardcoded for testing
+    this.shader_piece = LiteGraph.CodeLib[this.getCodeName()];
 
 }
 
@@ -85,29 +92,37 @@ LGraph2ParamNode.prototype.constructor = LGraph2ParamNode;
 
 LGraph2ParamNode.prototype.onExecute = function()
 {
-    this.processInputCode();
+    this.processNodePath();
 }
 
-LGraph2ParamNode.prototype.processInputCode = function()
+LGraph2ParamNode.prototype.processNodePath = function()
 {
+    var input1 = this.getInputNodePath(0);
+    var input2 = this.getInputNodePath(1);
+    var input = input1.concat(input2);
+    input.push(this);
+    this.node_path[0] = input;
+}
 
+
+LGraph2ParamNode.prototype.processInputCode = function(scope)
+{
     var output_code = LiteGraph.EMPTY_CODE;
 
-    var code_A = this.getInputCode(0) || this.onGetNullCode(0);
-    var code_B = this.getInputCode(1) || this.onGetNullCode(1);
+    var code_A = this.getInputCode(0) || this.onGetNullCode(0, scope);
+    var code_B = this.getInputCode(1) || this.onGetNullCode(1 , scope);
     if(code_A && code_B){
         // (out_var, a, b, c, scope, out_type)
         output_code = this.codes[0] = this.shader_piece.getCode( this.getCodeName()+"_"+this.id,
             code_A.getOutputVar(),
             code_B.getOutputVar(),
-            this.getScope(),
+            scope,
             this.getOutputType()); // output var must be fragment
         // if the alpha is an input, otherwise hardcoded
         output_code.order = this.order;
         output_code.merge(code_A);
         output_code.merge(code_B);
     }
-
 
 }
 
@@ -180,26 +195,27 @@ LGraph3ParamNode.prototype.constructor = LGraph3ParamNode;
 
 LGraph3ParamNode.prototype.onExecute = function()
 {
-    this.processInputCode();
+    this.processNodePath();
 }
 
-LGraph3ParamNode.prototype.processInputCode = function()
+LGraph3ParamNode.prototype.processInputCode = function(scope)
 {
 
     var output_code = LiteGraph.EMPTY_CODE;
 
-    var code_A = this.getInputCode(0) || this.onGetNullCode(0);
-    var code_B = this.getInputCode(1) || this.onGetNullCode(1);
-    var code_C = this.getInputCode(2) || this.onGetNullCode(2);
+    var code_A = this.getInputCode(0) || this.onGetNullCode(0, scope);
+    var code_B = this.getInputCode(1) || this.onGetNullCode(1, scope);
+    var code_C = this.getInputCode(2) || this.onGetNullCode(2, scope);
     if(code_A && code_B && code_C){
         // (out_var, a, b, c, scope, out_type)
         output_code = this.codes[0] = this.shader_piece.getCode( this.getCodeName()+"_"+this.id,
             code_A.getOutputVar(),
             code_B.getOutputVar(),
             code_C.getOutputVar(),
-            this.getScope(),
+            scope,
             this.getOutputType()); // output var must be fragment
         // if the alpha is an input, otherwise hardcoded
+        // we need to set the order into the code so the lines set up correctly
         output_code.order = this.order;
 
         if(code_C){
@@ -210,6 +226,19 @@ LGraph3ParamNode.prototype.processInputCode = function()
     }
 
 
+}
+
+LGraph3ParamNode.prototype.processNodePath = function()
+{
+    var input1 = this.getInputNodePath(0);
+    var input2 = this.getInputNodePath(1);
+    var input3 = this.getInputNodePath(2);
+    var input = input1.concat(input2);
+    var input = input.concat(input3);
+    input.push(this);
+    this.node_path[0] = input;
+    this.node_path[1] = input.slice(0);
+    this.node_path[2] = input.slice(0);
 }
 
 
@@ -276,12 +305,66 @@ LGraph3ParamNode.prototype.getOutputExtraInfo = function()
 
 
 //Constant
+function LGraphConstColor()
+{
+    this.addOutput("color","vec4", {vec4:1});
+    this.properties = { color:"#ffffff"};
+    this.editable = { property:"value", type:"vec3" };
+
+    this.shader_piece = new PConstant("vec3"); // hardcoded for testing
+}
+
+LGraphConstColor.title = "Color";
+LGraphConstColor.desc = "Constant color";
+
+
+LGraphConstColor.prototype.onExecute = function()
+{
+    this.codes[0] = this.shader_piece.getCode("vec3_"+this.id, this.valueToString(), CodePiece.FRAGMENT); // need to check scope
+    this.codes[0].order = this.order;
+}
+
+LGraphConstColor.prototype.onDrawBackground = function(ctx)
+{
+
+}
+
+LGraphConstColor.prototype.onExecute = function()
+{
+    this.codes[0] = this.shader_piece.getCode("vec3_"+this.id, this.hexToColor(), CodePiece.FRAGMENT); // need to check scope
+    this.codes[0].order = this.order;
+}
+
+
+
+LGraphConstColor.prototype.hexToColor = function()
+{
+    // http://stackoverflow.com/questions/5623838/rgb-to-hex-and-hex-to-rgb
+    function hexToRgb(hex) {
+        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? [
+            parseInt(result[1], 16),
+            parseInt(result[2], 16),
+            parseInt(result[3], 16)
+        ] : null;
+    };
+    var color = hexToRgb(this.properties["color"]);
+    return "vec3("+(color[0]/255).toFixed(3)+","+(color[1]/255).toFixed(3)+","+(color[2]/255).toFixed(3)+")";
+}
+
+
+
+LiteGraph.registerNodeType("constants/"+LGraphConstColor.title, LGraphConstColor);
+
+
+
+//Constant
 function LGraphConstant()
 {
-    this.addOutput("value","number", {number:1});
+    this.addOutput("value","float", {float:1});
     this.properties = { value:1.0 };
 
-    this.editable = { property:"value", type:"number" };
+    this.editable = { property:"value", type:"float" };
 
     this.shader_piece = new PConstant("float"); // hardcoded for testing
 }
@@ -333,12 +416,22 @@ LGraphTime.title = "Time";
 LGraphTime.desc = "Time since execution started";
 
 
-
 LGraphTime.prototype.onExecute = function()
 {
-    this.codes[0] = this.shader_piece.getCode(CodePiece.FRAGMENT); // need to check scope
-    this.codes[0].order = this.order;
+    this.processNodePath();
+}
 
+LGraphTime.prototype.processNodePath = function()
+{
+    var input = [];
+    this.node_path[0] = input;
+    input.push(this);
+}
+
+LGraphTime.prototype.processInputCode = function(scope)
+{
+    this.codes[0] = this.shader_piece.getCode(scope); // need to check scope
+    this.codes[0].order = this.order;
 }
 
 LiteGraph.registerNodeType("constants/"+LGraphTime.title , LGraphTime);
@@ -559,7 +652,19 @@ LGraphUVs.desc = "Texture coordinates";
 
 LGraphUVs.prototype.onExecute = function()
 {
-    this.codes[0] = this.shader_piece.getCode(); // I need to check texture id
+    this.processNodePath();
+}
+
+LGraphUVs.prototype.processNodePath = function()
+{
+    var input = [];
+    this.node_path[0] = input;
+    input.push(this);
+}
+
+LGraphUVs.prototype.processInputCode = function(scope)
+{
+    this.codes[0] = this.shader_piece.getCode(this.properties.UTiling.toFixed(3), this.properties.VTiling.toFixed(3)); // I need to check texture id
     this.codes[0].order = this.order;
 }
 
@@ -584,7 +689,6 @@ function LGraphVertexPosWS()
 {
     this.addOutput("vec3","vec3", {vec3:1});
 
-
     this.shader_piece = PVertexPosWS; // hardcoded for testing
 }
 
@@ -593,10 +697,21 @@ LGraphVertexPosWS.desc = "Vertex position in WS";
 
 LGraphVertexPosWS.prototype.onExecute = function()
 {
+    this.processNodePath();
+}
+
+LGraphVertexPosWS.prototype.processNodePath = function()
+{
+    var input = [];
+    input.push(this);
+    this.node_path[0] = input;
+}
+
+LGraphVertexPosWS.prototype.processInputCode = function(scope)
+{
     this.codes[0] = this.shader_piece.getCode(); // I need to check texture id
     this.codes[0].order = this.order;
 }
-
 
 LiteGraph.registerNodeType("coordinates/"+LGraphVertexPosWS.title, LGraphVertexPosWS);
 
@@ -611,17 +726,22 @@ LiteGraph.registerNodeType("coordinates/"+LGraphVertexPosWS.title, LGraphVertexP
 function LGraphShader()
 {
     this.uninstantiable = true;
-    this.addInput("color","vec4", {vec4:1});
-    this.addInput("normal","vec3", {vec3:1});
-    this.addInput("world position offset","vec3", {vec3:1});
+    this.addInput("albedo","vec3", {vec3:1, vec4:1});
+    this.addInput("normal","vec3", {vec3:1, vec4:1}); // tangent space normal, if written
+    this.addInput("emission","vec3", {vec3:1, vec4:1});
+    this.addInput("specular","float", {float:1}); // specular power in 0..1 range
+    this.addInput("gloss","float", {float:1});
+    this.addInput("alpha","float", {float:1});
+    this.addInput("displacement","vec3", {vec3:1, vec4:1});
+
 
     //inputs: ["base color","metallic", "specular", "roughness", "emissive color", "opacity", "opacitiy mask", "normal", "world position offset", "world displacement", "tesselation multiplier", "subsurface color", "ambient occlusion", "refraction"],
     this.size = [125,250];
     this.shader_piece = ShaderConstructor;
 }
 
-LGraphShader.title = "Shader";
-LGraphShader.desc = "Shader Main Node";
+LGraphShader.title = "Output";
+LGraphShader.desc = "Output Main Node";
 
 
 LGraphShader.prototype.setValue = function(v)
@@ -646,16 +766,28 @@ LGraphShader.prototype.onWidget = function(e,widget)
 
 }
 
+LGraphShader.prototype.getFullCode = function(slot, scope) {
+    var path = this.getInputNodePath(slot);
+    for(var i = 0; i < path.length; ++i){
+        path[i].processInputCode(scope);
+    }
+    var code = this.getInputCode(slot) || LiteGraph.EMPTY_CODE; // 0 it's the color
+    return code;
+}
 
 LGraphShader.prototype.processInputCode = function() {
 
+    var color_code = this.getFullCode(0, CodePiece.FRAGMENT);
+    var normal_code = this.getFullCode(1, CodePiece.FRAGMENT);
+    var emission_code = this.getFullCode(2, CodePiece.FRAGMENT);
+    var specular_code = this.getFullCode(3, CodePiece.FRAGMENT);
+    var gloss_code = this.getFullCode(4, CodePiece.FRAGMENT);
+    var alpha_code = this.getFullCode(5, CodePiece.FRAGMENT);
+    var world_offset_code = this.getFullCode(6, CodePiece.VERTEX);
 
 
-    var color_code = this.getInputCode(0) || LiteGraph.EMPTY_CODE; // 0 it's the color
-    var normal_code = this.getInputCode(1) || LiteGraph.EMPTY_CODE; // 1 it's the normal
-    var world_offset_code = this.getInputCode(2) || LiteGraph.EMPTY_CODE; // 1 it's the position offset
 
-    var shader = this.shader_piece.createShader(color_code,normal_code,world_offset_code);
+    var shader = this.shader_piece.createShader(color_code,normal_code,emission_code,specular_code,gloss_code,alpha_code,world_offset_code);
     this.graph.shader_output = shader;
     var texture_nodes = this.graph.findNodesByType("texture/"+LGraphTexture.title);// we need to find all the textures used in the graph
     this.graph.shader_textures = [];
@@ -724,12 +856,21 @@ function LGraphTexture()
     this.addOutput("B","float", {float:1});
     this.addOutput("A","float", {float:1});
     this.addInput("UVs","vec2", {vec2:1});
+
+    // properties for for dat gui
     this.properties =  this.properties || {};
     this.properties.name = "";
+    this.properties.texture_type = "Color";
+    this.multichoice = {texture_type:[ 'Color', 'Normal map', 'Specular map' ],
+                        normal_map_type:[ 'Tangent space', 'Model space', 'Bump map' ]};
+    this.reloadonchange = {texture_type: 1};
+
+
+
     //this.size = [LGraphTexture.image_preview_size, LGraphTexture.image_preview_size];
     this.size = [170,165];
     this.shader_piece = PTextureSample; // hardcoded for testing
-
+    this.uvs_piece = PUVs;
     // default texture
 //    if(typeof(gl) != "undefined" && gl.textures["default"]){
 //        this.properties.name = "default";
@@ -842,7 +983,7 @@ LGraphTexture.loadTextureFromFile = function(data, filename, file, callback, gl)
         var texture = null;
         var no_ext_name = LiteGraph.removeExtension(filename);
         if( typeof(data) == "string" )
-            gl.textures[no_ext_name] = texture = GL.Texture.fromURL( data, {}, callback, gl );
+            gl.textures[no_ext_name] = texture = GL.Texture.fromURL( data, {minFilter:gl.LINEAR_MIPMAP_LINEAR}, callback, gl );
         else if( filename.toLowerCase().indexOf(".dds") != -1 )
             texture = GL.Texture.fromDDSInMemory(data, gl);
         else
@@ -889,7 +1030,7 @@ LGraphTexture.prototype.getExtraMenuOptions = function(graphcanvas)
 
 LGraphTexture.prototype.onExecute = function()
 {
-    this.processInputCode();
+    this.processNodePath();
 
     if(this._drop_texture ){
 
@@ -954,7 +1095,7 @@ LGraphTexture.prototype.onDrawBackground = function(ctx)
         ctx.translate(0,this.size[1]);
         ctx.scale(1,-1);
     }
-    ctx.drawImage(this._canvas,this.size[1]* 0.05,this.size[1]* 0.2,this.size[0]* 0.75,this.size[1]* 0.75);
+    ctx.drawImage(this._canvas,this.size[1]* 0.05,this.size[1]* 0.1,this.size[0]* 0.75,this.size[1]* 0.75);
     ctx.restore();
 }
 
@@ -995,14 +1136,47 @@ LGraphTexture.generateLowResTexturePreview = function(tex)
     return tex_canvas;
 }
 
-LGraphTexture.prototype.processInputCode = function()
+LGraphTexture.prototype.processNodePath = function()
 {
+    var input = this.getInputNodePath(0);
+    var cloned_input = input.slice(0);
+    cloned_input.push(this);
+    this.node_path[1] = cloned_input;
+    this.node_path[2] = cloned_input.slice(0);
+    this.node_path[3] = cloned_input.slice(0);
+    this.node_path[4] = cloned_input.slice(0);
+    this.node_path[5] = cloned_input.slice(0);
 
-    var input_code = this.getInputCode(0);
+}
+
+LGraphTexture.prototype.processInputCode = function(scope)
+{
+    if(this.properties.texture_type == "Normal map") {
+        if (!this.properties.hasOwnProperty("normal_map_type"))
+            this.properties.normal_map_type = "Tangent space";
+    } else
+        delete this.properties.normal_map_type;
+
+
+
+    var input_code = this.getInputCode(0) || this.onGetNullCode(0);
+    var texture_type = 0;
+    if(this.properties.texture_type == "Normal map"  ){
+        if(this.properties.normal_map_type == "Tangent space")
+            texture_type =  LiteGraph.TANGENT_MAP
+        else if(this.properties.normal_map_type == "Model space")
+            texture_type = LiteGraph.NORMAL_MAP;
+        else if(this.properties.normal_map_type == "Bump map")
+            texture_type = LiteGraph.BUMP_MAP;
+    }
+
+    else
+        texture_type = LiteGraph.COLOR_MAP;
+
 
     if(input_code){
         var texture_name = "u_" + (this.properties.name ? this.properties.name : "default_name") + "_texture"; // TODO check if there is a texture
-        var color_output = this.codes[1] = this.shader_piece.getCode("color_"+this.id, input_code.getOutputVar(), texture_name); // 1 it's the color output
+        var color_output = this.codes[1] = this.shader_piece.getCode("color_"+this.id, input_code.getOutputVar(), texture_name, texture_type, scope); // 1 it's the color output
         color_output.order = this.order;
 
         color_output.merge(input_code);
@@ -1032,6 +1206,12 @@ LGraphTexture.prototype.processInputCode = function()
 
 }
 
+LGraphTexture.prototype.onGetNullCode = function(slot)
+{
+    if(slot == 0)
+        return this.uvs_piece.getCode();
+
+}
 
 LiteGraph.registerNodeType("texture/"+LGraphTexture.title, LGraphTexture );
 window.LGraphTexture = LGraphTexture;
@@ -1048,6 +1228,7 @@ function LGraphCubemap()
     this.size = [LGraphTexture.image_preview_size, LGraphTexture.image_preview_size];
 
     this.shader_piece = PTextureSampleCube; // hardcoded for testing
+    this.vector_piece = new PReflected();
     this.size = [170,165];
 }
 
@@ -1075,7 +1256,7 @@ LGraphCubemap.prototype.onDropFile = function(data, filename, file)
 LGraphCubemap.prototype.onExecute = function()
 {
 
-    this.processInputCode();
+    this.processNodePath();
     if(this._drop_texture)
     {
         this.setOutputData(0, this._drop_texture);
@@ -1110,14 +1291,20 @@ LGraphCubemap.prototype.onDrawBackground = function(ctx)
 
 }
 
-
-LGraphCubemap.prototype.processInputCode = function()
+LGraphCubemap.prototype.processNodePath = function()
 {
+    var input = this.getInputNodePath(0);
+    input.push(this);
+    this.node_path[1] = input;
 
-    var input_code = this.getInputCode(0); // get input in link 0
+}
+
+LGraphCubemap.prototype.processInputCode = function(scope)
+{
+    var input_code = this.getInputCode(0) || this.onGetNullCode(0); // get input in link 0
     if(input_code){
         var texture_name = "u_" + (this.properties.name ? this.properties.name : "default_name") + "_texture"; // TODO check if there is a texture
-        var color_code = this.codes[1] = this.shader_piece.getCode("color_"+this.id, input_code.getOutputVar(), texture_name);
+        var color_code = this.codes[1] = this.shader_piece.getCode("color_"+this.id, input_code.getOutputVar(), texture_name, scope);
         color_code.order = this.order;
         color_code.merge(input_code);
     } else {
@@ -1127,6 +1314,12 @@ LGraphCubemap.prototype.processInputCode = function()
 
 }
 
+LGraphCubemap.prototype.onGetNullCode = function(slot)
+{
+    if(slot == 0)
+        return this.vector_piece.getCode();
+
+}
 
 LiteGraph.registerNodeType("texture/"+LGraphCubemap.title, LGraphCubemap );
 window.LGraphCubemap = LGraphCubemap;
@@ -1150,6 +1343,23 @@ LGraphVecToComps.desc = "Vector To Components";
 
 LGraphVecToComps.prototype.onExecute = function()
 {
+    this.processNodePath();
+}
+
+LGraphVecToComps.prototype.processNodePath = function()
+{
+    var input = this.getInputNodePath(0);
+    input.push(this);
+    this.node_path[0] = input.slice(0);
+    this.node_path[1] = input.slice(0);
+    this.node_path[2] = input.slice(0);
+    this.node_path[3] = input.slice(0);
+
+
+}
+
+LGraphVecToComps.prototype.processInputCode = function(scope)
+{
     var input_code = this.getInputCode(0);
 
     if(input_code){
@@ -1164,13 +1374,9 @@ LGraphVecToComps.prototype.onExecute = function()
         this.codes[2] = z_chan;
         var v_chan = input_code.clone();
         v_chan.output_var = input_code.getOutputVar()+".v";
-        this.codes[4] = v_chan;
-
+        this.codes[3] = v_chan;
     }
 }
-
-
-
 LiteGraph.registerNodeType("coordinates/"+LGraphVecToComps.title , LGraphVecToComps);
 
 
@@ -1230,6 +1436,31 @@ LiteGraph.registerNodeType("math/"+LGraphCos.title, LGraphCos);
 
 
 
+function LGraphFrac()
+{
+    this.code_name = "fract";
+    this.output_types = {vec2:1, float:1, vec3:1, vec4:1 };
+    this.intput_types = { vec2:1, float:1, vec3:1, vec4:1};
+    this.output_type = "vec2";
+
+    LGraph1ParamNode.call( this);
+    console.log(this);
+}
+
+LGraphFrac.prototype = Object.create(LGraph1ParamNode); // we inherit from Entity
+LGraphFrac.prototype.constructor = LGraphSin;
+
+LGraphFrac.title = "Fract";
+LGraphFrac.desc = "fract of input";
+
+
+LiteGraph.extendClass(LGraphFrac,LGraph1ParamNode);
+LiteGraph.registerNodeType("math/"+LGraphFrac.title, LGraphFrac);
+
+
+
+
+
 function LGraphSin()
 {
     this._ctor(LGraphSin.title);
@@ -1260,15 +1491,18 @@ LiteGraph.registerNodeType("math/"+LGraphSin.title, LGraphSin);
 
 function LGraphOperation()
 {
-    //this.code_name = "add";
     this.output_types = null;
     this.out_extra_info = {types_list: {float:1, vec3:1, vec4:1, vec2:1},   use_t:1};
     this.intput_typesA = null;
     this.in_extra_infoA = {types_list: {float:1, vec3:1, vec4:1, vec2:1},   use_t:1}
     this.intput_typesB = null;
     this.in_extra_infoB = {types_list: {float:1, vec3:1, vec4:1, vec2:1},   use_t:1};
+//    this.output_types = {vec2:1, float:1, vec3:1,  vec4:1};
+//    this.intput_typesA = {vec2:1, float:1, vec3:1,  vec4:1};
+//    this.intput_typesB = {vec2:1, float:1, vec3:1, vec4:1};
 
-    this.number_piece = new PConstant("float"); // hardcoded for testing
+
+    this.number_piece = new PConstant("float"); // hardcoded when the inputs are null
     this.properties = { A:0.0, B:0.0};
 
     LGraph2ParamNode.call( this);
@@ -1278,8 +1512,14 @@ LGraphOperation.prototype.constructor = LGraphOperation;
 
 
 
+LGraphOperation.prototype.infereTypes = function( output, target_slot) {
+    this.in_conected_using_T++;
+    var input = this.inputs[target_slot];
+    if(input.use_t && this.in_conected_using_T == 1){
+        for(var k in output.types)
+            this.T_types[k] = output.types[k];
+    }
 
-//LGraphOperation.prototype.infereTypes = function( output, target_slot) {
 //    var output_type = Object.keys(output.types)[0];
 //    if(target_slot == 2 && output_type == "number")
 //        return;
@@ -1290,14 +1530,15 @@ LGraphOperation.prototype.constructor = LGraphOperation;
 //        for (var k in output.types)
 //            this.T_types[k] = output.types[k];
 //    }
-//}
+}
 
-LGraphOperation.prototype.onGetNullCode = function(slot)
+
+LGraphOperation.prototype.onGetNullCode = function(slot, scope)
 {
     if(slot == 0){
-        return this.number_piece.getCode("float_"+this.id, this.properties["A"].toFixed(3), CodePiece.FRAGMENT); // need to check scope;
+        return this.number_piece.getCode("float_"+this.id, this.properties["A"].toFixed(3), scope); // need to check scope;
     } else if(slot == 1){
-        return this.number_piece.getCode("float_"+this.id, this.properties["B"].toFixed(3), CodePiece.FRAGMENT); // need to check scope;
+        return this.number_piece.getCode("float_"+this.id, this.properties["B"].toFixed(3), scope); // need to check scope;
     }
 
 }
@@ -1312,7 +1553,6 @@ LGraphOperation.prototype.onDrawBackground = function(ctx)
     if(!this.isInputConnected(1))
         this.inputs[1].label += "="+this.properties["B"].toFixed(3);
 }
-
 
 
 LiteGraph.extendClass(LGraphOperation,LGraph2ParamNode);
@@ -1358,6 +1598,8 @@ function LGraphMix()
     this.in_extra_infoA = {types_list: {float:1, vec3:1, vec4:1, vec2:1},   use_t:1}
     this.intput_typesB = null;
     this.in_extra_infoB = {types_list: {float:1, vec3:1, vec4:1, vec2:1},   use_t:1};
+    this.intput_typesC = null;
+    this.in_extra_infoC = {types_list: {float:1, vec3:1, vec4:1, vec2:1},   use_t:1};
 
     this.properties = { alpha:0.5};
     this.options = { alpha:{min:0, max:1, step:0.01}};
@@ -1384,10 +1626,10 @@ LGraphMix.prototype.infereTypes = function( output, target_slot) {
     }
 }
 
-LGraphMix.prototype.onGetNullCode = function(slot)
+LGraphMix.prototype.onGetNullCode = function(slot, scope)
 {
     if(slot == 2){
-        return this.number_piece.getCode("float_"+this.id, this.properties["alpha"].toFixed(3), CodePiece.FRAGMENT); // need to check scope;
+        return this.number_piece.getCode("float_"+this.id, this.properties["alpha"].toFixed(3), scope); // need to check scope;
     }
 
 }
@@ -1486,6 +1728,68 @@ LiteGraph.registerNodeType("operations/"+LGraphMulOp.title, LGraphMulOp);
 
 
 //UVS
+function LGraphPanner()
+{
+    this.addOutput("output","vec2", {vec2:1, vec3:1});
+    this.addInput("coordinate","vec2", {vec3:1,vec2:1});
+    this.addInput("time","float", {float:1});
+    this.properties = { SpeedX:1.0,
+        SpeedY:1.0 };
+    this.options = {    SpeedX:{min:-1.0, max:1.0, step:0.001},
+        SpeedY:{min:-1.0, max:1.0, step:0.001}
+    };
+    this.shader_piece = new PPanner(); // hardcoded for testing
+    this.uvs_piece = PUVs;
+}
+
+LGraphPanner.title = "Panner";
+LGraphPanner.desc = "Moves the input";
+
+
+LGraphPanner.prototype.onExecute = function()
+{
+    this.processNodePath();
+}
+
+LGraphPanner.prototype.processNodePath = function()
+{
+    var input1 = this.getInputNodePath(0);
+    var input2 = this.getInputNodePath(1);
+    var input = input1.concat(input2);
+    input.push(this);
+    this.node_path[0] = input;
+}
+
+
+LGraphPanner.prototype.processInputCode = function(scope)
+{
+
+    var code_input = this.getInputCode(0) || this.onGetNullCode(0, scope);
+    var code_time = this.getInputCode(1) || LiteGraph.EMPTY_CODE;
+
+    //(out_var, input, dx, dy, scope, out_type)
+    var output_code = this.codes[0] = this.shader_piece.getCode("panner_"+this.id, code_input.getOutputVar(), code_time.getOutputVar() ,this.properties.SpeedX.toFixed(3), this.properties.SpeedY.toFixed(3), scope, "vec2"); // output var must be fragment
+    output_code.order = this.order;
+
+    if(code_time != LiteGraph.EMPTY_CODE)
+        output_code.merge(code_time);
+    output_code.merge(code_input);
+
+
+}
+
+LGraphPanner.prototype.onGetNullCode = function(slot, scope)
+{
+    if(slot == 0)
+        return this.uvs_piece.getCode();
+
+}
+
+LiteGraph.registerNodeType("operations/"+LGraphPanner.title, LGraphPanner);
+
+
+
+//UVS
 function LGraphReflect()
 {
     this.addOutput("reflect vector","vec3", {vec3:1});
@@ -1529,49 +1833,58 @@ LiteGraph.registerNodeType("texture/"+LGraphReflect.title, LGraphReflect);
 
 
 
+
 function LGraphSmooth()
 {
-    this.addOutput("Result","float",{float:1});
-    this.addInput("lower","float", {float:1});
-    this.addInput("upper","float", {float:1});
-    this.addInput("x","float", {float:1});
+    this._ctor(LGraphSmooth.title);
+
+    this.code_name = "smoothstep";
+    this.output_types = null;
+    this.out_extra_info = {types_list: {float:1, vec3:1, vec4:1, vec2:1},   use_t:1};
+    this.intput_typesA = null;
+    this.in_extra_infoA = {types_list: {float:1, vec3:1, vec4:1, vec2:1},   use_t:1}
+    this.intput_typesB = null;
+    this.in_extra_infoB = {types_list: {float:1, vec3:1, vec4:1, vec2:1},   use_t:1};
+    this.intput_typesC = null;
+    this.in_extra_infoC = {types_list: {float:1, vec3:1, vec4:1, vec2:1},   use_t:1};
+
 
     this.properties = { lower:0.0,
                         upper:1.5};
-    this.shader_piece = PSmooth; // hardcoded for testing
+
+    this.number_piece = new PConstant("float");
+    LGraph3ParamNode.call( this);
 }
+
+LGraphSmooth.prototype = Object.create(LGraph3ParamNode); // we inherit from Entity
+LGraphSmooth.prototype.constructor = LGraphSmooth;
 
 LGraphSmooth.title = "SmoothStep";
-LGraphSmooth.desc = "Hermite interpolation";
+LGraphSmooth.desc = "smoothstep of input";
 
-LGraphSmooth.prototype.onExecute = function()
+//LGraphSmooth.prototype.infereTypes = function( output, target_slot) {
+//    var output_type = Object.keys(output.types)[0];
+//    if(target_slot == 2 && output_type == "float")
+//        return;
+//
+//    this.in_conected_using_T++;
+//    var input = this.inputs[target_slot];
+//    if (input.use_t && this.in_conected_using_T == 1) {
+//        for (var k in output.types)
+//            this.T_types[k] = output.types[k];
+//    }
+//}
+
+LGraphSmooth.prototype.onGetNullCode = function(slot, scope)
 {
-    this.processInputCode();
-}
-
-LGraphSmooth.prototype.processInputCode = function()
-{
-
-    var lower_code = this.getInputCode(0);
-    var upper_code = this.getInputCode(1);
-    var x_code = this.getInputCode(2);
-
-    var lower = lower_code ? lower_code.getOutputVar() :  this.properties["lower"].toFixed(3); // need to put the correct scope
-    var upper = upper_code ? upper_code.getOutputVar() :  this.properties["upper"].toFixed(3); // need to put the correct scope
-    var x_var = x_code ? x_code.getOutputVar() :  "0.0";
-
-    var output_code = this.codes[0] = this.shader_piece.getCode( "smoothed_"+this.id, lower, upper, x_var); // output var scope unknown
-    output_code.order = this.order;
-    if(x_code){
-        output_code.merge(x_code);
-        if(lower_code)
-            output_code.merge(lower_code);
-        if(upper_code)
-            output_code.merge(upper_code);
-    } else {
-        output_code = LiteGraph.EMPTY_CODE;
+    if(slot == 0){
+        return this.number_piece.getCode("float_"+this.id+""+ slot, this.properties["lower"].toFixed(3), scope); // need to check scope;
+    }
+    else if(slot == 1){
+        return this.number_piece.getCode("float_"+this.id+""+ slot, this.properties["upper"].toFixed(3), scope); // need to check scope;
     }
 
+    return LiteGraph.EMPTY_CODE;
 
 }
 
@@ -1586,4 +1899,67 @@ LGraphSmooth.prototype.onDrawBackground = function(ctx)
         this.inputs[1].label += "="+this.properties["upper"].toFixed(3);
 }
 
-LiteGraph.registerNodeType("texture/"+LGraphSmooth.title, LGraphSmooth );
+LiteGraph.extendClass(LGraphSmooth,LGraph3ParamNode);
+LiteGraph.registerNodeType("operations/"+LGraphSmooth.title, LGraphSmooth);
+
+
+
+//
+//function LGraphSmooth()
+//{
+//    this.addOutput("Result","float",{float:1});
+//    this.addInput("lower","float", {float:1});
+//    this.addInput("upper","float", {float:1});
+//    this.addInput("x","float", {float:1});
+//
+//    this.properties = { lower:0.0,
+//                        upper:1.5};
+//    this.shader_piece = PSmooth; // hardcoded for testing
+//}
+//
+//LGraphSmooth.title = "SmoothStep";
+//LGraphSmooth.desc = "Hermite interpolation";
+//
+//LGraphSmooth.prototype.onExecute = function()
+//{
+//    this.processInputCode();
+//}
+//
+//LGraphSmooth.prototype.processInputCode = function()
+//{
+//
+//    var lower_code = this.getInputCode(0);
+//    var upper_code = this.getInputCode(1);
+//    var x_code = this.getInputCode(2);
+//
+//    var lower = lower_code ? lower_code.getOutputVar() :  this.properties["lower"].toFixed(3); // need to put the correct scope
+//    var upper = upper_code ? upper_code.getOutputVar() :  this.properties["upper"].toFixed(3); // need to put the correct scope
+//    var x_var = x_code ? x_code.getOutputVar() :  "0.0";
+//
+//    var output_code = this.codes[0] = this.shader_piece.getCode( "smoothed_"+this.id, lower, upper, x_var); // output var scope unknown
+//    output_code.order = this.order;
+//    if(x_code){
+//        output_code.merge(x_code);
+//        if(lower_code)
+//            output_code.merge(lower_code);
+//        if(upper_code)
+//            output_code.merge(upper_code);
+//    } else {
+//        output_code = LiteGraph.EMPTY_CODE;
+//    }
+//
+//
+//}
+//
+//LGraphSmooth.prototype.onDrawBackground = function(ctx)
+//{
+//    //show the current value
+//    this.inputs[0].label = "lower";
+//    if(!this.isInputConnected(0))
+//        this.inputs[0].label += "="+this.properties["lower"].toFixed(3);
+//    this.inputs[1].label = "upper";
+//    if(!this.isInputConnected(0))
+//        this.inputs[1].label += "="+this.properties["upper"].toFixed(3);
+//}
+//
+////LiteGraph.registerNodeType("texture/"+LGraphSmooth.title, LGraphSmooth );
