@@ -47,14 +47,14 @@ vik.app = (function() {
         var data =  {
             callbacksToComplete: 0,
             callbacksCompleted: 0,
-            callback: module.loadGraph
+            callback: module.changeGraph
         };
         var sync_load = {
             data: data,
             onComplete: function( ){
                 data.callbacksCompleted++;
                 if(data.callbacksCompleted == data.callbacksToComplete) {
-                    data.callback("graphs/lee.json");
+                    data.callback("lee.json");
                 }
             }
         };
@@ -81,12 +81,12 @@ vik.app = (function() {
 
     }
 
-    module.loadGraph = function(graph_url) {
-
-        graph.loadFromURL(graph_url, vik.app.compile, [true,true]);
-
-
-    }
+//    module.loadGraph = function(graph_url) {
+//
+//        graph.loadFromURL(graph_url, vik.app.compile, [true,true]);
+//        vik.ui.updateLeftPanel( null );
+//
+//    }
 
     function loadContent() {
 
@@ -270,9 +270,11 @@ vik.app = (function() {
         function onComplete(data){
             main_node.mesh = data.mesh;
             vik.app.compile();
+            vik.ui.updateLeftPanel( null );
         }
 
-        graph.loadFromURL("graphs/"+graph_name+".json", onComplete);
+
+        graph.loadFromURL("graphs/"+graph_name, onComplete);
     }
 
     function loadListeners(){
@@ -301,7 +303,7 @@ vik.app = (function() {
 
         var clean_graph = document.getElementById("clean_graph");
         clean_graph.addEventListener("click",function(){
-            w2confirm('Are you sure you want to delete the graph?', function (btn) { if(btn == "Yes"){ graph.clear(); module.loadGraph("graphs/empty_graph.json"); } })
+            w2confirm('Are you sure you want to delete the graph?', function (btn) { if(btn == "Yes"){ graph.clear(); module.changeGraph("empty_graph.json"); } })
 
         });
 
@@ -370,7 +372,7 @@ vik.app = (function() {
                 for(var i = list_nodes.length - 1; i>= 0; --i){
                     list_nodes[i].addEventListener("click",function(){
                         var graph_name = this.id.toLowerCase();
-                        module.changeGraph(graph_name);
+                        module.changeGraph(graph_name+".json");
                         w2popup.close();
 
                     });
