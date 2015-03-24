@@ -54,7 +54,7 @@ vik.app = (function() {
             onComplete: function( ){
                 data.callbacksCompleted++;
                 if(data.callbacksCompleted == data.callbacksToComplete) {
-                    data.callback("graphs/Lee.json");
+                    data.callback("graphs/lee.json");
                 }
             }
         };
@@ -73,9 +73,9 @@ vik.app = (function() {
         module.loadTexture("CobblesNormal", "assets/textures/texture/CobblesNormal.jpg", sync_load, {minFilter: gl.LINEAR_MIPMAP_LINEAR});
         module.loadTexture("Cobbles_DISP", "assets/textures/texture/Cobbles_DISP.jpg", sync_load, {minFilter: gl.LINEAR_MIPMAP_LINEAR});
         module.loadTexture("CobblesNormal_SPEC", "assets/textures/texture/Cobbles_SPEC.jpg", sync_load, {minFilter: gl.LINEAR_MIPMAP_LINEAR});
-        module.loadTexture("Lee", "assets/textures/texture/lee.jpg", sync_load, {minFilter: gl.LINEAR_MIPMAP_LINEAR});
-        module.loadTexture("Lee_normal", "assets/textures/texture/Lee_normal.jpg", sync_load, {minFilter: gl.LINEAR_MIPMAP_LINEAR});
-        module.loadTexture("Lee_spec", "assets/textures/texture/Lee_spec.jpg", sync_load, {minFilter: gl.LINEAR_MIPMAP_LINEAR});
+        module.loadTexture("lee", "assets/textures/texture/lee.jpg", sync_load, {minFilter: gl.LINEAR_MIPMAP_LINEAR});
+        module.loadTexture("lee_normal", "assets/textures/texture/lee_normal.jpg", sync_load, {minFilter: gl.LINEAR_MIPMAP_LINEAR});
+        module.loadTexture("lee_spec", "assets/textures/texture/lee_spec.jpg", sync_load, {minFilter: gl.LINEAR_MIPMAP_LINEAR});
         module.loadCubeMap("cube2", "assets/textures/cubemap/cube2.jpg", sync_load, {minFilter: gl.LINEAR_MIPMAP_LINEAR});
 
 
