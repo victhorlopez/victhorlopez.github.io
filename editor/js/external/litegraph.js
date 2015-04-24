@@ -2411,12 +2411,17 @@ LGraphNode.prototype.disconnectOutput = function(slot, target_node)
         {
             var link_id = output.links[i];
             var link_info = this.graph.links[ link_id ];
-
             //is the link we are searching for...
             if( link_info.target_id == target_node.id )
             {
                 output.links.splice(i,1); //remove here
-                target_node.inputs[ link_info.target_slot ].link = null; //remove there
+                var input_slot = target_node.inputs[ link_info.target_slot ];
+                input_slot.link = null; //remove there
+
+                if(input_slot.use_t){
+                    target_node.disconnectTemplateSlot(i);
+                }
+
                 delete this.graph.links[ link_id ]; //remove the link from the links pool
                 break;
             }
@@ -2430,8 +2435,14 @@ LGraphNode.prototype.disconnectOutput = function(slot, target_node)
             var link_info = this.graph.links[ link_id ];
 
             var target_node = this.graph.getNodeById( link_info.target_id );
-            if(target_node)
-                target_node.inputs[ link_info.target_slot ].link = null; //remove other side link
+            if(target_node){
+                var input_slot = target_node.inputs[ link_info.target_slot ];
+                input_slot.link = null; //remove other side link
+                if(input_slot.use_t){
+                    target_node.disconnectTemplateSlot(i);
+                }
+            }
+
         }
         output.links = null;
     }
@@ -3747,8 +3758,10 @@ LGraphCanvas.prototype.onNodeSelected = function (n) {
 }
 
 LGraphCanvas.prototype.processNodeSelected = function (n, e) {
-    if(LiteGraph.debug)
+    if(LiteGraph.debug){
         console.log(n);
+    }
+
     n.selected = true;
     if (n.onSelected)
         n.onSelected();
@@ -3766,6 +3779,7 @@ LGraphCanvas.prototype.processNodeSelected = function (n, e) {
         this.onNodeSelected(n);
 
     console.log(n);
+    console.log(this.graph);
     //if(this.node_in_panel) this.showNodePanel(n);
 }
 
@@ -5364,7 +5378,7 @@ ShaderConstructor.createVertexCode = function (properties ,albedo,normal,emissio
         r += "      v_coord = a_coord;\n";
     r += "      v_normal = (u_model * vec4(a_normal, 0.0)).xyz;\n";
     r += "      vec3 pos = a_vertex;\n";
-    if (albedo.fragment.isLineIncluded("depth")){
+    if (albedo.vertex.isLineIncluded("depth")){
         r += "      vec4 pos4 = (u_model * vec4(pos,1.0));\n";
         r += "      float depth = pos4.z / pos4.w;\n";
     }

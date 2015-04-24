@@ -87,10 +87,11 @@ vik.ui = (function () {
 
 
         controller.onFinishChange(function(value) {
-                if (reloadonchange) {
-                    onFinnishCB(node);
-                }
-                module.updateDisplays();
+            if (reloadonchange) {
+                onFinnishCB(node);
+            }
+            module.updateDisplays();
+
         });
 
         if(dat_gui.items)
@@ -103,7 +104,7 @@ vik.ui = (function () {
                     module.addGlobalNode(node);
                 else
                     module.removeGlobalNode(node);
-            vik.app.compile();
+            vik.app.compile(false, true);
         });
 
     }
