@@ -2812,6 +2812,29 @@
         return mesh;
     }
 
+    /**
+     * Returns am empty mesh and loads a mesh and parses it using the Mesh.parsers
+     * @method Mesh.fromData
+     * @param {Array} meshes array containing all the meshes
+     */
+    Mesh.fromData = function(url, data, gl)
+    {
+        gl = gl || global.gl;
+        var mesh = new GL.Mesh(undefined,undefined,undefined,gl);
+        mesh.ready = false;
+
+
+        var ext = url.substr(url.length - 4).toLowerCase();
+        var parser = Mesh.parsers[ ext ];
+        if(parser)
+            parser.call(null, data, {mesh: mesh});
+        else
+            throw("Mesh.fromURL: no parser found for format " + ext);
+        delete mesh["ready"];
+
+
+        return mesh;
+    }
 
     Mesh.getScreenQuad = function(gl)
     {
