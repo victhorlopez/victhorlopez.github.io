@@ -1083,7 +1083,7 @@ LGraphTexturePreview.prototype.onDrawBackground = function(ctx)
     ctx.restore();
 }
 
-LiteGraph.registerNodeType("texture/"+LGraphTexturePreview.title, LGraphTexturePreview );
+//LiteGraph.registerNodeType("texture/"+LGraphTexturePreview.title, LGraphTexturePreview );
 window.LGraphTexturePreview = LGraphTexturePreview;
 
 function LGraphTexture()
@@ -1244,10 +1244,10 @@ LGraphTexture.loadTextureFromFile = function(data, filename, file, callback, gl)
 }
 
 LGraphTexture.prototype.toggleNormalMap = function () {
-    if(that.properties.texture_type == "Normal map") {
-        that.options.normal_map_type.hidden = 0;
+    if(this.properties.texture_type == "Normal map") {
+        this.options.normal_map_type.hidden = 0;
     } else  {
-        that.options.normal_map_type.hidden = 1;
+        this.options.normal_map_type.hidden = 1;
     }
 }
 
@@ -1421,7 +1421,7 @@ LGraphTexture.prototype.processInputCode = function(scope)
     var texture_type = 0;
     if(this.properties.texture_type == "Normal map"  ){
         if(this.properties.normal_map_type == "Tangent space")
-            texture_type =  LiteGraph.TANGENT_MAP
+            texture_type =  LiteGraph.TANGENT_MAP;
         else if(this.properties.normal_map_type == "Model space")
             texture_type = LiteGraph.NORMAL_MAP;
         else if(this.properties.normal_map_type == "Bump map")
@@ -1828,13 +1828,14 @@ LiteGraph.registerNodeType("math/"+LGraphAbs.title, LGraphAbs);
 
 function LGraphCos()
 {
-    this.code_name = "cos";
-    this.output_types = {float:1, vec3:1, vec4:1, vec2:1};
-    this.intput_types = {float:1, vec3:1, vec4:1, vec2:1};
-    this.output_type = "float";
+    this._ctor(LGraphCos.title);
 
+    this.code_name = "cos";
+    this.output_types = null;
+    this.out_extra_info = {types_list: {float:1, vec3:1, vec4:1, vec2:1},   use_t:1};
+    this.intput_types = null;
+    this.in_extra_info = {types_list: {float:1, vec3:1, vec4:1, vec2:1},   use_t:1};
     LGraph1ParamNode.call( this);
-    console.log(this);
 }
 
 LGraphCos.prototype = Object.create(LGraph1ParamNode); // we inherit from Entity
@@ -1882,8 +1883,6 @@ function LGraphFrac()
 {
     this._ctor(LGraphFrac.title);
     this.code_name = "fract";
-
-    this.code_name = "sin";
     this.output_types = null;
     this.out_extra_info = {types_list: {float:1, vec3:1, vec4:1, vec2:1},   use_t:1};
     this.intput_types = null;
@@ -2366,6 +2365,14 @@ LGraphMix.prototype.infereTypes = function( output_slot, target_slot, node) {
     }
 }
 
+LGraphMix.prototype.disconnectTemplateSlot = function(input_slot){
+    if(input_slot == 2 ) return;
+
+    if(this.in_conected_using_T > 0)
+        this.in_conected_using_T--;
+    this.resetTypes(input_slot);
+}
+
 LGraphMix.prototype.onGetNullCode = function(slot, scope)
 {
     if(slot == 2){
@@ -2595,18 +2602,31 @@ LGraphSmooth.prototype.constructor = LGraphSmooth;
 LGraphSmooth.title = "SmoothStep";
 LGraphSmooth.desc = "smoothstep of input";
 
-//LGraphSmooth.prototype.infereTypes = function( output, target_slot) {
-//    var output_type = Object.keys(output.types)[0];
-//    if(target_slot == 2 && output_type == "float")
-//        return;
-//
-//    this.in_conected_using_T++;
-//    var input = this.inputs[target_slot];
-//    if (input.use_t && this.in_conected_using_T == 1) {
-//        for (var k in output.types)
-//            this.T_types[k] = output.types[k];
-//    }
-//}
+LGraphSmooth.prototype.infereTypes = function( output_slot, target_slot, node) {
+    var out_types = node.getTypesFromOutputSlot(output_slot);
+    if( (target_slot == 0 || target_slot == 1) && Object.keys(out_types)[0] == "float")
+        return;
+    this.connectTemplateSlot();
+
+
+    var input = this.inputs[target_slot];
+    if (input.use_t && Object.keys(this.T_in_types).length === 0) {
+
+        this.T_in_types["float"] = 1; // we hardcode the float as operation always accept float in one of the inputs
+        for (var k in out_types)
+            this.T_in_types[k] = out_types[k];
+        for (var k in out_types)
+            this.T_out_types[k] = out_types[k];
+    }
+}
+
+LGraphMix.prototype.disconnectTemplateSlot = function(input_slot){
+    if(input_slot == 0 || input_slot == 1 ) return;
+
+    if(this.in_conected_using_T > 0)
+        this.in_conected_using_T--;
+    this.resetTypes(input_slot);
+}
 
 LGraphSmooth.prototype.onGetNullCode = function(slot, scope)
 {
