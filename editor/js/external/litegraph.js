@@ -37,9 +37,9 @@ var LiteGraph = {
 
     proxy: null, //used to redirect calls
 
-    debug: false,
+    debug: true,
     throw_errors: true,
-    showcode:false,
+    showcode:true,
     registered_node_types: {},
 
     graph_max_steps:0,
