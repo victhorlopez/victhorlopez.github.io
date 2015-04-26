@@ -647,7 +647,7 @@ EZ.Renderer.prototype = {
     createShaders: function (){
         // shaders from rendeer
         var flat_shader = new GL.Shader('\
-				precision highp float;\
+				precision mediump float;\
 				attribute vec3 a_vertex;\
 				uniform mat4 u_mvp;\
 				void main() {\
@@ -655,7 +655,7 @@ EZ.Renderer.prototype = {
 					gl_PointSize = 5.0;\
 				}\
 				', '\
-				precision highp float;\
+				precision mediump float;\
 				uniform vec4 u_color;\
 				void main() {\
 				  gl_FragColor = u_color;\
@@ -664,7 +664,7 @@ EZ.Renderer.prototype = {
         gl.shaders["flat"] = flat_shader;
         var phong_uniforms = { u_lightvector: vec3.fromValues( 1.0, 0.0, 0.0), u_lightcolor: EZ.WHITE };
         var phong_shader = new GL.Shader('\
-			precision highp float;\
+			precision mediump float;\
 			attribute vec3 a_vertex;\
 			attribute vec3 a_normal;\
 			varying vec3 v_normal;\
@@ -675,7 +675,7 @@ EZ.Renderer.prototype = {
 				gl_Position = u_mvp * vec4(a_vertex,1.0);\
 			}\
 			', '\
-			precision highp float;\
+			precision mediump float;\
 			varying vec3 v_normal;\
 			uniform vec3 u_lightcolor;\
 			uniform vec3 u_lightvector;\
@@ -689,7 +689,7 @@ EZ.Renderer.prototype = {
         gl.shaders["phong"].uniforms( phong_uniforms );
 
         var cubemap_shader = new Shader('\
-				precision highp float;\
+				precision mediump float;\
 				attribute vec3 a_vertex;\
 				attribute vec3 a_normal;\
 				varying vec3 v_pos;\
@@ -702,7 +702,7 @@ EZ.Renderer.prototype = {
 					gl_Position = u_mvp * vec4(a_vertex,1.0);\
 				}\
 				', '\
-				precision highp float;\
+				precision mediump float;\
 				varying vec3 v_normal;\
 				varying vec3 v_pos;\
 				uniform vec4 u_color;\
@@ -715,7 +715,7 @@ EZ.Renderer.prototype = {
         gl.shaders["cubemap"] = cubemap_shader;
 
         var env_reflection_shader = new Shader('\
-				precision highp float;\
+				precision mediump float;\
 				attribute vec3 a_vertex;\
 				attribute vec3 a_normal;\
 				varying vec3 v_pos;\
@@ -732,7 +732,7 @@ EZ.Renderer.prototype = {
 				    v_refl = reflect(I,v_normal);\
 				}\
 				', '\
-				precision highp float;\
+				precision mediump float;\
 				varying vec3 v_normal;\
 				varying vec3 v_pos;\
 				varying vec3 v_refl;\
@@ -749,7 +749,7 @@ EZ.Renderer.prototype = {
         gl.shaders["env_reflection"].uniforms( phong_uniforms );
 
         var env_refraction_shader = new Shader('\
-				precision highp float;\
+				precision mediump float;\
 				attribute vec3 a_vertex;\
 				attribute vec3 a_normal;\
 				varying vec3 v_pos;\
@@ -762,7 +762,7 @@ EZ.Renderer.prototype = {
 					gl_Position = u_mvp * vec4(a_vertex,1.0);\
 				}\
 				', '\
-				precision highp float;\
+				precision mediump float;\
 				varying vec3 v_normal;\
 				varying vec3 v_pos;\
 				varying vec3 v_refr;\
