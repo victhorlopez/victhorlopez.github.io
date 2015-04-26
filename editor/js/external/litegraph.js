@@ -5345,7 +5345,7 @@ ShaderConstructor.createVertexCode = function (properties ,albedo,normal,emissio
     var light_dir = "vec3("+properties.light_dir_x+","+properties.light_dir_y+","+properties.light_dir_z+")";
 
     // header
-    var r = "precision highp float;\n"+
+    var r = "precision mediump float;\n"+
         "attribute vec3 a_vertex;\n"+
         "attribute vec3 a_normal;\n"+
         "attribute vec2 a_coord;\n";
@@ -5435,7 +5435,7 @@ ShaderConstructor.createFragmentCode = function (properties, albedo,normal,emiss
 
 
     // header
-    var r = "precision highp float;\n"+
+    var r = "precision mediump float;\n"+
      "#extension GL_OES_standard_derivatives : enable\n";
     if (albedo.fragment.isLineIncluded("v_coord"))
         r += "varying vec2 v_coord;\n";
