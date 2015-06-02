@@ -491,11 +491,11 @@ EZ.Renderer.prototype = {
 
     addTextureFromURL: function (name, url, params, callback) {
         params = params || {};
-        this.context.textures[name] = GL.Texture.fromURL( url, params, callback, this.context);
+        return this.context.textures[name] = GL.Texture.fromURL( url, params, callback, this.context);
     },
     addCubeMapFromURL: function (name, url, params, callback) {
         params = params || {};
-        this.context.textures[name] = GL.Texture.cubemapFromURL( url, params, callback, this.context);
+        return this.context.textures[name] = GL.Texture.cubemapFromURL( url, params, callback, this.context);
     },
 
     loadAssets: function () {
@@ -581,7 +581,8 @@ EZ.Renderer.prototype = {
             u_viewprojection: cam.view_projection,
             u_model: entity.global_transform,
             u_mvp: this.mvp_matrix,
-            u_time: this.total_time
+            u_time: this.total_time,
+            u_frame_time: this.dt
         };
 
     },
@@ -593,6 +594,7 @@ EZ.Renderer.prototype = {
         this.now = getTime();
         var dt = (this.now - this.then )* 0.001;
         this.then = this.now;
+        this.dt = dt;
         this.total_time += dt;
         if( this.current_scene )
             this.current_scene.update(dt);

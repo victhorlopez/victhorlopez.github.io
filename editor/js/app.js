@@ -26,7 +26,8 @@ vik.app = (function () {
         light_dir_y: 1.0,
         light_dir_z: 1.0,
         light_mode:"phong",
-        alpha_threshold:0.5
+        alpha_threshold:0.5,
+        environment_name: "default"
     };
     module.scene_properties = scene_default_properties;
 
@@ -67,8 +68,14 @@ vik.app = (function () {
 //        sync_load.data.callbacksToComplete += 2;
 //        graph_gl.textures[name] = GL.Texture.cubemapFromURL( url, params, sync_load.onComplete, graph_gl);
         //renderer.addCubeMapFromURL(name, url, params, sync_load.onComplete);
-        renderer.addCubeMapFromURL(name, url, params);
-
+        return renderer.addCubeMapFromURL(name, url, params);
+    }
+    module.setDefaultCubeMap = function (name, url, sync_load, params) {
+        if(gl.textures[name]){
+            gl.textures["cube_default"] = gl.textures[name];
+        } else {
+            gl.textures["cube_default"] = gl.textures[name] = module.loadCubeMap(name, url, null, {temp_color:[80,120,40,255], is_cross:1, minFilter: gl.LINEAR_MIPMAP_LINEAR});;
+        }
     }
 
     module.loadTextures = function (name, url) {
@@ -106,7 +113,7 @@ vik.app = (function () {
 //        module.loadTexture("lee_normal", "assets/textures/texture/lee_normal.jpg", sync_load, {minFilter: gl.LINEAR_MIPMAP_LINEAR});
 //        module.loadTexture("lee_spec", "assets/textures/texture/lee_spec.jpg", sync_load, {minFilter: gl.LINEAR_MIPMAP_LINEAR});
 //        module.loadCubeMap("cube_default", "assets/textures/cubemap/cube_default.jpg", sync_load, {minFilter: gl.LINEAR_MIPMAP_LINEAR});
-        module.loadCubeMap("cube_default", module.CUBEMAPS_PATH +"cube_default.jpg", null, {minFilter: gl.LINEAR_MIPMAP_LINEAR});
+        module.setDefaultCubeMap("grimmnight_large", module.CUBEMAPS_PATH +"grimmnight_large.jpg", null, {temp_color:[80,120,40,255], is_cross:1, minFilter: gl.LINEAR_MIPMAP_LINEAR});
         renderer.addMesh("torus", GL.Mesh.fromURL("assets/meshes/torus.obj"));
 
         // we read the list of assets and store the filename and its paths into a map
@@ -143,6 +150,8 @@ vik.app = (function () {
         var camera = new EZ.ECamera(45, renderer.context.width / renderer.context.height, 0.1, 1000);
         camera.position = [0, 0.5, 2];
         camera.target = [0, 0.5, 0];
+//        camera.position = [20, 0.5, 380];
+//        camera.target = [0, 0.5, 400];
         var scene = new EZ.EScene();
         main_node.mesh = "lee";
         main_node.flags.blend = false;
@@ -219,6 +228,10 @@ vik.app = (function () {
                 for (var i in shader_textures) {
                     var texture_name = shader_textures[i];
                     // we add the texture to our node
+                    main_node.setTexture(texture_name, texture_name);
+                }
+                for (var i in shader.cubemaps) {
+                    var texture_name = shader.cubemaps[i];
                     main_node.setTexture(texture_name, texture_name);
                 }
                 main_node.setTexture("cube_default", "cube_default");
@@ -493,7 +506,7 @@ vik.app = (function () {
 
         $(".search").on("input", function () {
             var value = $(this).val().toLowerCase();
-            $("#layout_layout3_panel_main .property-name").each(function (index) {
+            $("#layout_layout3_panel_main #palette .property-name").each(function (index) {
                 if ($(this).html().toLowerCase().indexOf(value) >= 0 || value == "") {
                     $(this).parent().parent().show();
                 }
@@ -502,7 +515,7 @@ vik.app = (function () {
                 }
             });
 
-            $("#layout_layout3_panel_main .folder ul").each(function (index) {
+            $("#layout_layout3_panel_main #palette .folder ul").each(function (index) {
                 $(this).show();
                 if ($(this).children(':visible').length <= 1)
                     $(this).hide();
