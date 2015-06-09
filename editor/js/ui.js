@@ -100,12 +100,18 @@ vik.ui = (function () {
         controller.onChange(function(value) {
             if(this.callback)
                 node[this.callback]();
-            if(this.property == "is_global")
+            if(this.property == "is_global"){
                 if(value == true)
                     module.addGlobalNode(node);
                 else
                     module.removeGlobalNode(node);
-            vik.app.compile(false, true);
+                vik.app.compile(false, true);
+            } else if(properties["is_global"] !== true){
+                vik.app.compile(false, true);
+            } else {
+                vik.app.draw();
+            }
+
         });
 
     }
@@ -459,8 +465,14 @@ vik.ui = (function () {
     module.setProperties = function(nodes) {
         for(var i in nodes){
             var node = nodes[i];
-            if(node.properties.is_global)
+            if(node.properties.is_global){
                 module.addGlobalNode(node);
+                var opts_ctrl = node.options ? node.options["is_global"] : undefined;
+                var cb = opts_ctrl ? (opts_ctrl.callback) : undefined;
+                if(cb)
+                    node[cb]();
+            }
+
         }
     }
 
@@ -506,7 +518,7 @@ vik.ui = (function () {
         }
 
         var f2 = properties_gui.__folders["Lighting"];
-        f2.add(properties, 'light_mode', [ 'phong', 'blinn-phong' ]);
+        f2.add(properties, 'light_mode', [ 'phong' ]);
         f2.addColor(properties, 'color');
         f2.add(properties, 'light_dir_x', -1, 1, 0.01);
         f2.add(properties, 'light_dir_y', -1, 1, 0.01);
