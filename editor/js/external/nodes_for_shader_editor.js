@@ -532,7 +532,7 @@ function LGraphConstVec2()
     this.properties = { v1:1.0,
                         v2:1.0 };
     //this.editable = { property:"value", type:"vec2" };
-
+    this.size = [115,20];
     this.shader_piece = new PConstant("vec2"); // hardcoded for testing
 }
 
@@ -612,6 +612,7 @@ function LGraphConstVec3()
                         v2:1.0,
                         v3:1.0};
     this.editable = { property:"value", type:"vec3" };
+    this.size = [147,20];
     this.shader_piece = new PConstant("vec3"); // hardcoded for testing
 }
 
@@ -695,6 +696,7 @@ function LGraphConstVec4()
     this.editable = { property:"value", type:"vec4" };
 
     this.shader_piece = new PConstant("vec4");
+    this.size = [181,20];
 }
 
 LGraphConstVec4.title = "ConstVec4";

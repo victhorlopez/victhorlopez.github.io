@@ -111,7 +111,7 @@ vik.ui = (function () {
             } else {
                 vik.app.draw();
             }
-
+            module.updateDisplays();
         });
 
     }
