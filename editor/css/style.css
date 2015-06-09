@@ -38,10 +38,10 @@ body #layout .dg .property-name{
     padding-left: 12px;
 }
 
-/*body #layout .dg.main {*/
-    /*box-shadow: 0 0 8px rgba(0,0,0,0.7);*/
-    /*overflow: auto;*/
-/*}*/
+body #layout #palette .dg.main {
+    box-shadow: 0 0 8px rgba(0,0,0,0.7);
+    overflow: auto;
+}
 
 /*@media only screen and (max-width : 1350px) {*/
     /*body #layout.gui-auto-hide .dg.ac {*/
