@@ -1364,7 +1364,7 @@ LGraphTexture.loadTextureFromFile = function(data, filename, file, callback, gl)
         var texture = null;
         var no_ext_name = LiteGraph.removeExtension(filename);
         if( typeof(data) == "string" )
-            gl.textures[no_ext_name] = texture = GL.Texture.fromURL( data, {wrap: gl.REPEAT}, callback, gl );
+            gl.textures[no_ext_name] = texture = GL.Texture.fromURL( data, {}, callback, gl );
         else if( filename.toLowerCase().indexOf(".dds") != -1 )
             texture = GL.Texture.fromDDSInMemory(data, { minFilter:  gl.LINEAR_MIPMAP_LINEAR });
         else
@@ -1637,11 +1637,14 @@ LGraphTexture.configTexture = function(tex)
         tex.minFilter = gl.LINEAR_MIPMAP_LINEAR;
         tex.wrapS = gl.REPEAT;
         tex.wrapT = gl.REPEAT;
+    } else {
+        tex.minFilter = gl.NEAREST;
+        tex.wrapS = gl.CLAMP_TO_EDGE;
+        tex.wrapT = gl.CLAMP_TO_EDGE;
     }
-
-    gl.texParameteri(tex.texture_type, gl.TEXTURE_MIN_FILTER, tex.minFilter );
     gl.texParameteri(tex.texture_type, gl.TEXTURE_WRAP_S, tex.wrapS );
     gl.texParameteri(tex.texture_type, gl.TEXTURE_WRAP_T, tex.wrapT );
+    gl.texParameteri(tex.texture_type, gl.TEXTURE_MIN_FILTER, tex.minFilter );
     gl.bindTexture(tex.texture_type, null); //disable
 }
 
