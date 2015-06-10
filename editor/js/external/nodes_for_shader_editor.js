@@ -371,8 +371,8 @@ LGraphConstColor.prototype.processInputCode = function(scope)
 
 LGraphConstColor.prototype.callbackIsGlobal = function(  )
 {
-    this.options.global_name.hidden = !this.options.global_name.hidden
-
+    this.options.global_name.hidden = !this.properties.is_global
+    this.setGlobalColor();
     if(this.id in this.graph.globals)
         delete this.graph.globals[this.id];
     else{
@@ -447,8 +447,8 @@ LGraphConstant.prototype.onWidget = function(e,widget)
 
 LGraphConstant.prototype.callbackIsGlobal = function(  )
 {
-    this.options.global_name.hidden = !this.options.global_name.hidden
-
+    this.options.global_name.hidden = !this.properties.is_global;
+    this.setGlobalColor();
     if(this.id in this.graph.globals)
         delete this.graph.globals[this.id];
     else{
@@ -594,8 +594,8 @@ LGraphConstVec2.prototype.valueToString = function()
 
 LGraphConstVec2.prototype.callbackIsGlobal = function(  )
 {
-    this.options.global_name.hidden = !this.options.global_name.hidden
-
+    this.options.global_name.hidden = !this.properties.is_global;
+    this.setGlobalColor();
     if(this.id in this.graph.globals)
         delete this.graph.globals[this.id];
     else{
@@ -677,8 +677,8 @@ LGraphConstVec3.prototype.valueToString = function()
 
 LGraphConstVec3.prototype.callbackIsGlobal = function(  )
 {
-    this.options.global_name.hidden = !this.options.global_name.hidden
-
+    this.options.global_name.hidden = !this.properties.is_global;
+    this.setGlobalColor();
     if(this.id in this.graph.globals)
         delete this.graph.globals[this.id];
     else{
@@ -765,8 +765,10 @@ LGraphConstVec4.prototype.valueToString = function()
 
 LGraphConstVec4.prototype.callbackIsGlobal = function(  )
 {
-    this.options.global_name.hidden = !this.options.global_name.hidden
 
+    this.options.global_name.hidden = !this.properties.is_global;
+
+    this.setGlobalColor();
     if(this.id in this.graph.globals)
         delete this.graph.globals[this.id];
     else{
@@ -877,7 +879,6 @@ function LGraphUVs()
     this.properties = { UTiling:1.0,
                         VTiling:1.0 };
     this.options =  this.options || {};
-    this.options.is_global = {hidden:false};
     this.options = {    UTiling:{ step:0.01},
                         VTiling:{step:0.01}
     };
@@ -2601,7 +2602,6 @@ function LGraphPanner()
     this.properties = { SpeedX:1.0,
         SpeedY:1.0 };
     this.options =  this.options || {};
-    this.options.is_global = {hidden:false};
     this.options = {    SpeedX:{min:-1.0, max:1.0, step:0.001},
         SpeedY:{min:-1.0, max:1.0, step:0.001}
     };
