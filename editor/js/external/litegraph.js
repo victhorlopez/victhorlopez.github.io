@@ -30,7 +30,7 @@ var LiteGraph = {
     NODE_DEFAULT_BGCOLOR: "#444",
     NODE_DEFAULT_BOXCOLOR: "#AEF",
     NODE_SELECTED_COLOR: "#FFF",
-    NODE_DEFAULT_SHAPE: "round", // round circle box
+    NODE_DEFAULT_SHAPE: "box", // round circle box
     MAX_NUMBER_OF_NODES: 1000, //avoid infinite loops
     DEFAULT_POSITION: [100,100],//default node position
     node_images_path: "",
