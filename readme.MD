@@ -12,10 +12,12 @@ Other libraries
 The project includes some other libraries to fulfill other requirements
 
  For the UI:
- * Dat.gui (https://code.google.com/p/dat-gui/)  
- * w2ui (http://w2ui.com/web/)
+ * Dat.gui (https://code.google.com/p/dat-gui/).
+ * w2ui (http://w2ui.com/web/).
+
  For the icons:
- * Font-awesome: (http://fortawesome.github.io/Font-Awesome/)
+ * Font-awesome: (http://fortawesome.github.io/Font-Awesome/).
+
  General utility:
  * Jquery: (https://jquery.com/).
 
