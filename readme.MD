@@ -16,9 +16,11 @@ The project includes some other libraries to fulfill other requirements
  	* w2ui (http://w2ui.com/web/).
 
  For the icons:
+ 
  	* Font-awesome: (http://fortawesome.github.io/Font-Awesome/).
 
  General utility:
+
 	* Jquery: (https://jquery.com/).
 
  Assets 
