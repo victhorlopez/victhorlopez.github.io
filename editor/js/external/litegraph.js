@@ -5709,8 +5709,8 @@ ShaderConstructor.createFragmentCode = function (properties, albedo,normal,emiss
 
 
     // header
-    var r = "precision mediump float;\n"+
-     "#extension GL_OES_standard_derivatives : enable\n";
+    var r = "#extension GL_OES_standard_derivatives : enable\n"+
+     "precision mediump float;\n";
     if (albedo.fragment.isLineIncluded("v_coord"))
         r += "varying vec2 v_coord;\n";
     //if (includes["v_normal"] || normal != LiteGraph.EMPTY_CODE )
